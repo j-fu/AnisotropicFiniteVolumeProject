@@ -1,0 +1,19 @@
+name = "AnisoFV"
+uuid = "0e29cce2-9159-407f-85a4-620479635abe"
+authors = ["Jürgen Fuhrmann <juergen-fuhrmann@web.de>"]
+version = "0.1.0"
+
+[deps]
+ExtendableGrids = "cfc395e8-590f-11e8-1f13-43a2532b2fa8"
+ExtendableSparse = "95c220a8-a1cf-11e9-0c77-dbfce5f500b3"
+GridVisualize = "5eed8a63-0fb0-45eb-886d-8d5a387d12b8"
+HypertextLiteral = "ac1192a8-f4b3-4bfe-ba22-af5b92cd3ab2"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
+PlutoVista = "646e1f28-b900-46d7-9d87-d554eb38a413"
+PyPlot = "d330b81b-6aea-500a-939a-2ce795aea3ee"
+Revise = "295af30f-e4ad-537b-8983-00126c2a3abe"
+SimplexGridFactory = "57bfcd06-606e-45d6-baf4-4ba06da0efd5"
+StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
+Triangulate = "f7e6ffb2-c36d-4f8f-a77e-16e897189344"
+VoronoiFVM = "82b139dc-5afc-11e9-35da-9b9bdfd336f3"
