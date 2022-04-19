@@ -18,9 +18,9 @@ function trifactors!(ω, e, itri, pointlist, trianglelist)
     #   Compute determinant 
     det=V11*V22 - V12*V21
    
-	#   Area
-	area=0.5*det
-    
+    #   Area
+    area=0.5*det
+    area=abs(area)
     # Squares of edge lengths
     dd1=V13*V13+V23*V23 # l32
     dd2=V12*V12+V22*V22 # l31
