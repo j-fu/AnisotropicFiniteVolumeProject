@@ -103,6 +103,9 @@ function fvm_assemble!(A_h, # System matrix
     end
 end
 
+
+
+
 function fvnorms(u,pointlist,trianglelist)
     local_edgenodes=[ 2 3; 3 1; 1 2]'
     num_nodes_per_cell=3;
@@ -128,4 +131,7 @@ function fvnorms(u,pointlist,trianglelist)
     end
     return (sqrt(l2norm),sqrt(h1norm));
 end
+
+
+
 

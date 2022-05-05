@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.0
+# v0.18.0
 
 using Markdown
 using InteractiveUtils
@@ -97,17 +97,6 @@ f(x,y)=sinpi(x)*sinpi(y)
 
 # ╔═╡ cc714e7c-5bd6-11eb-32d1-8fbc1fef150b
 Λ=1
-
-# ╔═╡ 88b18360-55fe-11eb-240f-4b91d97414aa
-function fem_solve(grid,Λ,f,β)
-    # Initialize sparse matrix and right hand side
-    n=num_nodes(grid)
-    matrix=spzeros(n,n)
-    rhs=zeros(n)
-    # Call the assemble function.
-    fem_assemble!(matrix,rhs,grid,Λ,f,β)
-    sol=matrix\rhs
-end 
 
 # ╔═╡ ed4e7d23-afde-4ec9-b054-7b54074acd74
 solution=fem_solve(grid,1,f,β)
@@ -245,7 +234,6 @@ end
 # ╠═ab4ba264-560a-11eb-18df-2d42c80ce562
 # ╠═af4ea19a-560a-11eb-2429-4bd8a3d7516e
 # ╠═cc714e7c-5bd6-11eb-32d1-8fbc1fef150b
-# ╠═88b18360-55fe-11eb-240f-4b91d97414aa
 # ╠═ed4e7d23-afde-4ec9-b054-7b54074acd74
 # ╟─1f3cd802-391d-406e-813c-56761ad53620
 # ╠═acbfb736-5f4f-4b4b-aead-5586b2609785

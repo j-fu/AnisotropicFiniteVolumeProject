@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.0
+# v0.18.0
 
 using Markdown
 using InteractiveUtils
@@ -25,6 +25,7 @@ begin
     using PlutoUI, PyPlot,SimplexGridFactory,ExtendableGrids,ExtendableSparse,GridVisualize,SparseArrays, Printf, HypertextLiteral,PlutoVista,Triangulate
 	using VoronoiFVM
 	using LinearAlgebra
+	GridVisualize.default_plotter!(PlutoVista);
 end;
 
 
@@ -74,28 +75,6 @@ md"""
 ### Isotropic
 """
 
-# ╔═╡ 459fa50e-6295-4662-a735-ba9f686cb608
-function vfvmfactors(itri,pts,tris)
-	ω=@MVector zeros(3)
-	e=@MVector zeros(3)
-	VoronoiFVM.cellfactors!(Triangle2D,Cartesian2D,pts,tris,itri,ω,e)
-ω,e
-end
-
-# ╔═╡ 41e5fa28-ad78-467e-8f76-230f54164b2a
-function femgrad(itri,coord,pointlist)
-	C=@MMatrix zeros(3,3)
-	AnisoFV.coordmatrix!(C,coord,pointlist,itri)
-	G0= @MMatrix zeros(3,3)
-	I=@MMatrix zeros(3,3)
-	for i=1:3 
-		I[i,i]=1
-	end
-    vol=abs(det(C))/2
-	G=view(C\I,:,2:3)
-	G,vol
-end
-
 # ╔═╡ e42699e3-7ae0-4cf4-981d-ac2811b85621
 function vorofactors(itri,pts,tris)
 	G,vol=femgrad(itri,pts,tris)
@@ -106,8 +85,16 @@ function vorofactors(itri,pts,tris)
 ω,e
 end
 
+# ╔═╡ 459fa50e-6295-4662-a735-ba9f686cb608
+function vfvmfactors(itri,pts,tris)
+	ω=@MVector zeros(3)
+	e=@MVector zeros(3)
+	VoronoiFVM.cellfactors!(Triangle2D,Cartesian2D,pts,tris,itri,ω,e)
+ω,e
+end
+
 # ╔═╡ e8baf009-9546-45fb-8e19-31368a2f347d
-function femfactors!(ω,e,itri, coord, pointlist)
+function AnisoFV.femfactors!(ω,e,itri, coord, pointlist)
 	G,vol=femgrad(itri,coord,pointlist)
 	e[1]=-dot(G[2,:],G[3,:])*vol
 	e[2]=-dot(G[1,:],G[3,:])*vol
@@ -116,9 +103,12 @@ function femfactors!(ω,e,itri, coord, pointlist)
 	ω,e
 end
 
+# ╔═╡ 6aaf5454-0cf9-444a-995e-bb7bbbb275a8
+femfactors(itri, coord, pointlist)=femfactors!(MVector{3,Float64}(0,0,0),MVector{3,Float64}(0,0,0),itri,coord,pointlist)
+
 # ╔═╡ 5507f5f8-6c2e-4316-9cf5-bebbe806d987
 function genfactors!(ω,e,itri,coord, pointlist;bary=true)
-    G,vol=femgrad(itri,coord,pointlist)	
+    G,vol=AnisoFV.femgrad(itri,coord,pointlist)	
 	
 	i1=pointlist[1,itri]		
 	i2=pointlist[2,itri]		
@@ -189,12 +179,27 @@ end
 	
 end
 
+# ╔═╡ 75a4c248-84cc-4302-bc59-51f09a6e2bb8
+AnisoFV.baryfactors(itri, coord, pointlist)=genfactors!(MVector{3,Float64}(0,0,0),MVector{3,Float64}(0,0,0),itri,coord,pointlist;bary=true)
+
+# ╔═╡ 4fc48d46-ba39-46e6-bc14-462ec6c7ae62
+AnisoFV.circumfactors(itri, coord, pointlist)=genfactors!(MVector{3,Float64}(0,0,0),MVector{3,Float64}(0,0,0),itri,coord,pointlist;bary=false)
+
 # ╔═╡ 55ed5e5c-b51d-4d85-afbd-677576f27f1a
 begin
 X=[0 1 0.0;
    0 0 1]
 X=rand(2,3)
 end
+
+# ╔═╡ b185ee05-c981-4a96-a27b-849b572ce03c
+femfactors(1,X,[1,2,3])
+
+# ╔═╡ 8e05718d-33d4-4272-b9be-781ac2fa6762
+baryfactors(1,X,[1,2,3])
+
+# ╔═╡ 4fa921db-7af4-479a-aaeb-df40844f7401
+circumfactors(1,X,[1,2,3])
 
 # ╔═╡ e5523355-be26-4e47-bead-45de87a98408
 vorofactors(1,X,[1,2,3])
@@ -210,123 +215,11 @@ md"""
 ### Anisotropic
 """
 
-# ╔═╡ b05b3eb8-acb0-456e-8cc4-3f3c2cb6d003
-function femfactors!(ω,e,itri, Λ,coord, pointlist)
-	G,vol=femgrad(itri,coord,pointlist)
-	e[1]=-dot(G[2,:],Λ*G[3,:])*vol
-	e[2]=-dot(G[1,:],Λ*G[3,:])*vol
-	e[3]=-dot(G[1,:],Λ*G[2,:])*vol
-	ω[1]=ω[2]=ω[3]=vol/3
-	ω,e
-end
-
-# ╔═╡ 6aaf5454-0cf9-444a-995e-bb7bbbb275a8
-femfactors(itri, coord, pointlist)=femfactors!(MVector{3,Float64}(0,0,0),MVector{3,Float64}(0,0,0),itri,coord,pointlist)
-
-# ╔═╡ ee4eb858-d7f6-41df-a63a-524a69d63909
-femfactors(itri,Λ, coord, pointlist)=femfactors!(MVector{3,Float64}(0,0,0),MVector{3,Float64}(0,0,0),itri,Λ,coord,pointlist)
-
-# ╔═╡ b185ee05-c981-4a96-a27b-849b572ce03c
-femfactors(1,X,[1,2,3])
-
-# ╔═╡ 16117f28-9205-4380-b6e7-f9670ba7e110
-function genfactors!(ω,e,itri,Λ, coord, pointlist;bary=false)
-    G,vol=femgrad(itri,coord,pointlist)	
-
-	i1=pointlist[1,itri]		
-	i2=pointlist[2,itri]		
-	i3=pointlist[3,itri]	
-if bary
-   center=@SVector [sum(coord[1,pointlist[:,itri]])/3,sum(coord[2,pointlist[:,itri]])/3]
-
-else
-   center=@MVector zeros(2)
-   Triangulate.tricircumcenter!(center,coord[:,1],coord[:,2],coord[:,3])
-   		
-   	
-end
- 	ec23=@SVector [ (coord[1,i2]+coord[1,i3])/2, (coord[2,i2]+coord[2,i3])/2 ]
-	e23=coord[:,i2]-coord[:,i3]
-	g=(center-ec23)
-	nn23=@SVector [g[2],-g[1]]
-	nn23*=sign(dot(e23,nn23))
-	
-	ec31=@SVector [(coord[1,i1]+coord[1,i3])/2, (coord[2,i1]+coord[2,i3])/2 ]
-	e31=coord[:,i3]-coord[:,i1]
-	g=(center-ec31)
-	nn31=@SVector [g[2],-g[1]]
-	nn31*=sign(dot(e31,nn31))
-
-	ec12=@SVector [(coord[1,i1]+coord[1,i2])/2, (coord[2,i1]+coord[2,i2])/2 ]
-    e12=coord[:,i1]-coord[:,i2]
-	g=(center-ec12)
-	nn12=@SVector [g[2],-g[1]]
-	nn12*=sign(dot(e12,nn12))
-
-		h23=norm(e23)
-		Γ23=norm(center-ec23)
-		h31=norm(e31)
-		Γ31=norm(center-ec31)
-		h12=norm(e12)
-		Γ12=norm(center-ec12)
-
-	
-	β=@MMatrix zeros(3,3)
-	β[1,1]=Γ12*Γ12*dot(Λ*nn12,nn12)
-	β[1,2]=Γ12*Γ23*dot(Λ*nn12,nn23)
-	β[1,3]=Γ12*Γ31*dot(Λ*nn12,nn31)
-	β[2,1]=Γ23*Γ12*dot(Λ*nn23,nn12)
-	β[2,2]=Γ23*Γ23*dot(Λ*nn23,nn23)
-	β[2,3]=Γ23*Γ31*dot(Λ*nn23,nn31)
-	β[3,1]=Γ31*Γ12*dot(Λ*nn31,nn12)
-	β[3,2]=Γ31*Γ23*dot(Λ*nn31,nn23)
-	β[3,3]=Γ31*Γ31*dot(Λ*nn31,nn31)
-
-	
-# Frolkovic's lambda values are projections of the diffusion tensor
-	λ12= h12*dot(Λ*(nn12-nn31),G[2,:])/Γ12
-	λ23= h23*dot(Λ*(nn23-nn12),G[3,:])/Γ23
-	λ31= h31*dot(Λ*(nn31-nn23),G[1,:])/Γ31
-    λ23,λ31,λ12	
-
-# Lambda values as form factors	
-	λ12= -dot(Λ*(nn12-nn31),G[2,:])
-	λ23= -dot(Λ*(nn23-nn12),G[3,:])
-	λ31= -dot(Λ*(nn31-nn23),G[1,:])
-	e.=(λ23,λ31,λ12)	
-
-	if bary
-    	ω[1]=ω[2]=ω[3]=vol/3
-	else
-	ω[1]=(h31*Γ31 + h12*Γ12)/4
-	ω[2]=(h23*Γ23 + h12*Γ12)/4		
-	ω[3]=(h31*Γ31 + h23*Γ23)/4
-	end
-	ω,e,β
-	
-end
-
-# ╔═╡ 75a4c248-84cc-4302-bc59-51f09a6e2bb8
-baryfactors(itri, coord, pointlist)=genfactors!(MVector{3,Float64}(0,0,0),MVector{3,Float64}(0,0,0),itri,coord,pointlist;bary=true)
-
-# ╔═╡ 4fc48d46-ba39-46e6-bc14-462ec6c7ae62
-circumfactors(itri, coord, pointlist)=genfactors!(MVector{3,Float64}(0,0,0),MVector{3,Float64}(0,0,0),itri,coord,pointlist;bary=false)
-
-# ╔═╡ a515a372-204a-4019-a827-e494143937f2
-baryfactors(itri, Λ,coord, pointlist)=genfactors!(MVector{3,Float64}(0,0,0),MVector{3,Float64}(0,0,0),itri,Λ,coord,pointlist;bary=true)
-
-# ╔═╡ 8e05718d-33d4-4272-b9be-781ac2fa6762
-baryfactors(1,X,[1,2,3])
-
-# ╔═╡ 2211561b-ca8b-45e6-a15c-11bde9c0199c
-circumfactors(itri, Λ,coord, pointlist)=genfactors!(MVector{3,Float64}(0,0,0),MVector{3,Float64}(0,0,0),itri,Λ,coord,pointlist;bary=false)
-
-# ╔═╡ 4fa921db-7af4-479a-aaeb-df40844f7401
-circumfactors(1,X,[1,2,3])
-
 # ╔═╡ dac18f3c-9629-4f70-9680-e54cdc0d8f50
-Y=[0 1 0.7;
+begin Y=[0 1 0.7;
    0 0 0.75]
+Y=rand(2,3)
+end
 
 # ╔═╡ e259d59e-b152-4a61-af6c-e9cb2f6bc31a
 Λ=[1.0 -0.1; -0.1 10.0]
@@ -448,7 +341,7 @@ end
 @bind run3 CheckBox()
 
 # ╔═╡ 8c207390-ec90-402e-9163-16c3a4660852
-    grid3=let
+grid3=let
 	b3=SimplexGridBuilder(Generator=Triangulate)
 	p1=point!(b3,-10,-10)
 	p2=point!(b3,10,-10)
@@ -513,7 +406,81 @@ scalarplot!(vvis3,grid3,vtsol3(t3)[1,:],show=true,flimits=(1,-1))
 norm(tsol3(t3)-vtsol3(t3)[1,:])
 
 # ╔═╡ d35efee7-e5d3-46ab-8b94-141a5c5e8041
+md"""
+### 2D Anisotropic
+"""
 
+# ╔═╡ 5b627845-30e7-4502-aff8-11a88f3a0f0d
+Λ4=[1 0 ; 0 1000]
+
+# ╔═╡ 017de554-19ed-4dbd-9c76-a198207c9ec5
+u4ex(x,y,t)=0.5*(cospi(x)*exp(-π^2*Λ4[1,1]*t)+1)
+
+# ╔═╡ ceb34bc4-635a-4b20-8bc4-9ee9eb05555f
+grid4=let
+	b3=SimplexGridBuilder(Generator=Triangulate)
+	p1=point!(b3,0,0)
+	p2=point!(b3,1,0)
+	p3=point!(b3,1,1)
+	p4=point!(b3,0,1)
+	facet!(b3,p1,p2)
+	facet!(b3,p2,p3)
+	facet!(b3,p3,p4)
+	facet!(b3,p4,p1)
+	simplexgrid(b3,maxvolume=0.001)
+end
+
+
+# ╔═╡ 5b1e8fc8-d2f0-45b9-a336-5637512bce47
+vis4ex=GridVisualizer(dim=2,size=(300,300))
+
+# ╔═╡ 43a46703-4fe4-478b-a202-5d528912e960
+function diffusion_step4(f,u,uold,grid,Δt)
+	N=num_nodes(grid)
+	coord=grid[Coordinates]
+	tris=grid[CellNodes]
+	ntri=num_cells(grid)
+	en=[2 3 ; 3 1 ; 1 2 ]'
+	fill!(f,0.0)
+	for itri=1:ntri
+		ω,e=baryfactors(itri,Λ4,coord,tris)
+		for iedge=1:3
+			k=tris[en[1,iedge],itri]		
+			l=tris[en[2,iedge],itri]	
+			du=10*e[iedge]*(u[k]-u[l])
+			f[k]+=du
+			f[l]-=du
+		end
+		for inode=1:3
+			k=tris[inode,itri]
+			f[k]+=ω[inode]*(u[k]-uold[k])/Δt
+		end
+	end
+end
+
+# ╔═╡ b8392f4f-e517-4aa3-8e2a-8d5508304ac1
+sys4=EvolutionSystem(grid4,diffusion_step4,jac=stdsparse(grid4));
+
+# ╔═╡ 517ac05b-8161-4fa6-8c40-99b69ff64989
+@bind t4 Slider(0:0.01:0.15,show_value=true)
+
+# ╔═╡ af554f23-3d60-4ce5-b63e-4553b4dff4da
+uex4t=map( (x,y)->u4ex(x,y,t4),grid4)
+
+# ╔═╡ c7581e3b-a3da-45e8-96d3-b64d6a364218
+scalarplot!(vis4ex,grid4,uex4t,show=true)
+
+# ╔═╡ 020d5637-7277-429b-9588-7a85a64e00ec
+tsol4=evolve(sys4,map( (x,y)->u4ex(x,y,0),grid4),tend=0.15,nsteps=100);
+
+# ╔═╡ b9bc6777-9d54-40a5-838d-36809cb30e27
+vis4=GridVisualizer(dim=2,size=(300,300))
+
+# ╔═╡ 8b6d29ed-6f5b-4477-967b-e588c8833dce
+scalarplot!(vis4,grid4,tsol4(t4),show=true)
+
+# ╔═╡ 02c75f02-fc53-43dd-b620-5bd4a4e69fcf
+norm(tsol4(t4)-uex4t)
 
 # ╔═╡ Cell order:
 # ╠═3a6b6f6d-58a8-47b4-ae6c-fc13905274fa
@@ -523,7 +490,6 @@ norm(tsol3(t3)-vtsol3(t3)[1,:])
 # ╠═4e481553-cded-443f-a8d3-4f4cd445ccac
 # ╠═e42699e3-7ae0-4cf4-981d-ac2811b85621
 # ╠═459fa50e-6295-4662-a735-ba9f686cb608
-# ╠═41e5fa28-ad78-467e-8f76-230f54164b2a
 # ╠═e8baf009-9546-45fb-8e19-31368a2f347d
 # ╠═6aaf5454-0cf9-444a-995e-bb7bbbb275a8
 # ╠═5507f5f8-6c2e-4316-9cf5-bebbe806d987
@@ -537,11 +503,6 @@ norm(tsol3(t3)-vtsol3(t3)[1,:])
 # ╠═befab178-78c3-4654-8cac-a93dbcd55c0c
 # ╠═baa513cd-280a-40e8-892a-7455a0804d46
 # ╟─4a8b1210-69f3-49e5-bdef-d6841aafd3f3
-# ╠═b05b3eb8-acb0-456e-8cc4-3f3c2cb6d003
-# ╠═ee4eb858-d7f6-41df-a63a-524a69d63909
-# ╠═16117f28-9205-4380-b6e7-f9670ba7e110
-# ╠═a515a372-204a-4019-a827-e494143937f2
-# ╠═2211561b-ca8b-45e6-a15c-11bde9c0199c
 # ╠═dac18f3c-9629-4f70-9680-e54cdc0d8f50
 # ╠═e259d59e-b152-4a61-af6c-e9cb2f6bc31a
 # ╠═420d71cf-5aed-4f83-90c1-72dcc67ecd8b
@@ -581,3 +542,16 @@ norm(tsol3(t3)-vtsol3(t3)[1,:])
 # ╠═f7ac95b2-b4bf-454f-8abe-fd0b0649da43
 # ╠═7318ae09-5301-429e-ad16-9a2083f815a2
 # ╠═d35efee7-e5d3-46ab-8b94-141a5c5e8041
+# ╠═5b627845-30e7-4502-aff8-11a88f3a0f0d
+# ╠═017de554-19ed-4dbd-9c76-a198207c9ec5
+# ╠═ceb34bc4-635a-4b20-8bc4-9ee9eb05555f
+# ╠═5b1e8fc8-d2f0-45b9-a336-5637512bce47
+# ╠═af554f23-3d60-4ce5-b63e-4553b4dff4da
+# ╠═c7581e3b-a3da-45e8-96d3-b64d6a364218
+# ╠═43a46703-4fe4-478b-a202-5d528912e960
+# ╠═b8392f4f-e517-4aa3-8e2a-8d5508304ac1
+# ╠═517ac05b-8161-4fa6-8c40-99b69ff64989
+# ╠═020d5637-7277-429b-9588-7a85a64e00ec
+# ╠═b9bc6777-9d54-40a5-838d-36809cb30e27
+# ╠═8b6d29ed-6f5b-4477-967b-e588c8833dce
+# ╠═02c75f02-fc53-43dd-b620-5bd4a4e69fcf

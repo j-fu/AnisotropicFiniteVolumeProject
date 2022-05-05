@@ -16,6 +16,20 @@ function gradient!(G,C,factdim,I)
     return vol
 end
 
+function femgrad(itri,coord,pointlist)
+    C=@MMatrix zeros(3,3)
+    AnisoFV.coordmatrix!(C,coord,pointlist,itri)
+    G0= @MMatrix zeros(3,3)
+    I=@MMatrix zeros(3,3)
+    for i=1:3 
+	I[i,i]=1
+    end
+    vol=abs(det(C))/2
+    G=view(C\I,:,2:3)
+    G,vol
+end
+
+
 
 function scalpro(G,dim,jl,il)
     s=0.0
@@ -131,3 +145,14 @@ function  fem_assemble!(A_h, # Global stiffness matrix
     end
 end
 
+
+
+function fem_solve(grid,Λ,f,β)
+    # Initialize sparse matrix and right hand side
+    n=num_nodes(grid)
+    matrix=spzeros(n,n)
+    rhs=zeros(n)
+    # Call the assemble function.
+    fem_assemble!(matrix,rhs,grid,Λ,f,β)
+    sol=matrix\rhs
+end 

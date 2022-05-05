@@ -67,8 +67,7 @@ function stdsparse(grid)
     m.cscmatrix
 end
 
-"""
-      evolve(system::EvolutionSystem,inival;tend=1.0,nsteps=10)
+"""      evolve(system::EvolutionSystem,inival;tend=1.0,nsteps=10)
 
 Perform n timesteps in interval `(0,tend)`
 """
