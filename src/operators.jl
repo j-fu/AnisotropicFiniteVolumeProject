@@ -5,6 +5,12 @@
 ∇Λ∇(u,x::Number,D=1)=∇Λ∇(x->u(x[1]),Vec(x),D*I)[1]
 
 
+rot(α)=[cos(α) -sin(α); sin(α) cos(α)]
+
+function ΛMatrix(Λ11,α)
+    r=rot(α)
+    r*[Λ11 0 ; 0 1]*r'
+end
 
 const finitebell_core=Polynomial([1,0,0,-10,15,-6])
 

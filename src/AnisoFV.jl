@@ -22,10 +22,10 @@ include("afvmlib.jl")
 export femfactors, baryfactors, circumfactors, afvm_solve
 
 include("evolution.jl")
-export EvolutionSystem,evolve,stdsparse
+export EvolutionSystem,evolve,stdsparse,statsolve
 
 include("operators.jl")
-export ∇Λ∇, finitebell
+export ∇Λ∇, finitebell,ΛMatrix
 
 
 end # module

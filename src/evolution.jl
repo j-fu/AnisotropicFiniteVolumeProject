@@ -15,6 +15,8 @@ struct EvolutionSystem{Op}
     grid::ExtendableGrid
     jac::SparseMatrixCSC{Float64, Int64}
     colors::Vector{Int}
+    e::Matrix{Float64}
+    ω::Matrix{Float64}
 end
 
 """
@@ -25,7 +27,7 @@ The signature of the callback is
     
     eval_tstep(residual,u,uold,grid,tstep)
 """
-function EvolutionSystem(grid,eval_tstep; jac=nothing)
+function EvolutionSystem(grid,eval_tstep; jac=nothing, Λ=[1 0 ; 0 1])
     N=num_nodes(grid)
     uold=rand(N)
     if isnothing(jac)
@@ -36,7 +38,16 @@ function EvolutionSystem(grid,eval_tstep; jac=nothing)
         jac=Float64.(sparsity_pattern)
     end
     colors = SparseDiffTools.matrix_colors(jac)
-    EvolutionSystem(eval_tstep,grid,jac,colors)
+
+    coord=grid[Coordinates]
+    tris=grid[CellNodes]
+    ntri=size(tris,2)
+    e=zeros(3,ntri)
+    ω=zeros(3,ntri)
+    for itri=1:ntri
+        ω[:,itri],e[:,itri]=baryfactors(itri,Λ,coord,tris)
+    end
+    EvolutionSystem(eval_tstep,grid,jac,colors,e,ω)
 end
 
 
@@ -75,7 +86,7 @@ function evolve(system::EvolutionSystem,inival;tend=1.0,nsteps=10)
     t=0.0
     tsol=VoronoiFVM.TransientSolution(t,inival)
     Δt=tend/nsteps
-    f!(y,u)=system.eval_tstep(y,u,inival,system.grid,Δt)
+    f!(y,u)=system.eval_tstep(y,u,inival,system,Δt)
     j!(jac,u)=SparseDiffTools.forwarddiff_color_jacobian!(jac,f!,u,colorvec = system.colors)	
     df = OnceDifferentiable(f!, j!, copy(inival), copy(inival), system.jac)
     for istep=1:nsteps
@@ -89,3 +100,14 @@ function evolve(system::EvolutionSystem,inival;tend=1.0,nsteps=10)
     tsol
 end
 
+
+function statsolve(system::EvolutionSystem,inival)
+    t=0.0
+    Δt=Inf
+    f!(y,u)=system.eval_tstep(y,u,inival,system,Δt)
+    j!(jac,u)=SparseDiffTools.forwarddiff_color_jacobian!(jac,f!,u,colorvec = system.colors)	
+    df = OnceDifferentiable(f!, j!, copy(inival), copy(inival), system.jac)
+    fill!(system.jac,0)
+    res=nlsolve(df,inival,method=:newton,iterations=20)
+    res.zero
+end
