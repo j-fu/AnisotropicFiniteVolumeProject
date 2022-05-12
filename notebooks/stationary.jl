@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.18.0
+# v0.19.4
 
 using Markdown
 using InteractiveUtils
@@ -23,12 +23,6 @@ begin
 	default_plotter!(PlutoVista)
 	using LinearAlgebra
 end
-
-# ╔═╡ e47a877e-004f-4666-9caf-b0d72e25949b
-using HypertextLiteral
-
-# ╔═╡ c36e1588-4144-41c8-befc-1708e84adc2e
-Revise.revise(AnisoFV)
 
 # ╔═╡ cfc41a2a-3df9-4fc2-82ec-2769b25e9d56
 X=-1.1:0.01:1.1
@@ -379,52 +373,8 @@ xnorm(esol2-adsol1),xnorm(esol2-adsol2),xnorm(esol2-adsol3),xnorm(esol2-adsol4)
 # ╔═╡ 23273fba-31cf-4f3f-b70a-866dac8d8085
 html"<hr>"
 
-# ╔═╡ 1f3a80ed-1c10-4be1-8294-1e6c4b69d372
-function myaside(x;top=10)
-	u=rand(1:10000)
-	@htl("""
-		<style>
-		
-		
-		@media (min-width: calc(700px + 30px + 300px)) {
-			aside.plutoui-aside-wrapper$(u) {
-
-	color: var(--pluto-output-color);
-	position:fixed;
-	right: 1rem;
-	top: $(top)px;
-	width: 400px;
-	padding: 10px;
-	border: 3px solid rgba(0, 0, 0, 0.15);
-	border-radius: 10px;
-	box-shadow: 0 0 11px 0px #00000010;
-	/* That is, viewport minus top minus Live Docs */
-	max-height: calc(100vh - 5rem - 56px);
-	overflow: auto;
-	z-index: 40;
-	background-color: var(--main-bg-color);
-	transition: transform 300ms cubic-bezier(0.18, 0.89, 0.45, 1.12);
-	
-			}
-			aside.plutoui-aside-wrapper > div {
-#				width: 300px;
-			}
-		}
-		</style>
-		
-		<aside class="plutoui-aside-wrapper$(u)">
-		<div>
-		$(x)
-		</div>
-		</aside>
-		
-		""")
-end
-
-
 # ╔═╡ Cell order:
 # ╠═60941eaa-1aea-11eb-1277-97b991548781
-# ╠═c36e1588-4144-41c8-befc-1708e84adc2e
 # ╠═cfc41a2a-3df9-4fc2-82ec-2769b25e9d56
 # ╠═332aaa75-55ee-403b-96cf-93c9e502a5bb
 # ╠═d64d2ece-0ef5-4922-9f7f-38b0e9e6ac4e
@@ -483,5 +433,3 @@ end
 # ╠═b87af7fb-2040-44dd-a22e-bdfc9aee388c
 # ╠═b9991c77-8d1f-411d-a6c3-3387be874624
 # ╟─23273fba-31cf-4f3f-b70a-866dac8d8085
-# ╠═e47a877e-004f-4666-9caf-b0d72e25949b
-# ╠═1f3a80ed-1c10-4be1-8294-1e6c4b69d372
