@@ -1,4 +1,4 @@
-name = "AnisoFV"
+name = "AnisotropicFiniteVolumeProject"
 uuid = "0e29cce2-9159-407f-85a4-620479635abe"
 authors = ["Jürgen Fuhrmann <juergen-fuhrmann@web.de>"]
 version = "0.1.0"
