@@ -2,7 +2,7 @@
 
 julia_version = "1.8.0-beta3"
 manifest_format = "2.0"
-project_hash = "b7f21a89886a430629a12e9a03690c29f676b29c"
+project_hash = "3f048eb0fd1372ee1904f8bf90487fa0214bc0ef"
 
 [[deps.AbstractAlgebra]]
 deps = ["GroupsCore", "InteractiveUtils", "LinearAlgebra", "MacroTools", "Markdown", "Random", "RandomExtensions", "SparseArrays", "Test"]
@@ -257,6 +257,12 @@ version = "0.5.9"
 deps = ["ArgTools", "FileWatching", "LibCURL", "NetworkOptions"]
 uuid = "f43a241f-c20a-4ad4-852c-f6b1247861c6"
 version = "1.6.0"
+
+[[deps.DrWatson]]
+deps = ["Dates", "FileIO", "JLD2", "LibGit2", "MacroTools", "Pkg", "Random", "Requires", "Scratch", "UnPack"]
+git-tree-sha1 = "67e9001646db6e45006643bf37716ecd831d37d2"
+uuid = "634d3b9d-ee7a-5ddf-bec9-22491ea816e1"
+version = "2.9.1"
 
 [[deps.DualNumbers]]
 deps = ["Calculus", "NaNMath", "SpecialFunctions"]

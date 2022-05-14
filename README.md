@@ -1,5 +1,11 @@
 # Finite Volumes for anisotropic problems
 
+## Main notebooks:
+- `stationary-test.jl`: "old version of test of stationary problems
+- `stationary.jl`: results for stationary problems. Writes graphics into plots subdir
+- `transient.jl`: tentative results for transient problems
+
+
 
 ## Supporting information
 - [Some resources on git](https://j-fu.github.io/marginalia/git/basics/)

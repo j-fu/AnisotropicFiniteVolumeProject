@@ -4,6 +4,7 @@ authors = ["Jürgen Fuhrmann <juergen-fuhrmann@web.de>"]
 version = "0.1.0"
 
 [deps]
+DrWatson = "634d3b9d-ee7a-5ddf-bec9-22491ea816e1"
 ExtendableGrids = "cfc395e8-590f-11e8-1f13-43a2532b2fa8"
 ExtendableSparse = "95c220a8-a1cf-11e9-0c77-dbfce5f500b3"
 GridVisualize = "5eed8a63-0fb0-45eb-886d-8d5a387d12b8"
