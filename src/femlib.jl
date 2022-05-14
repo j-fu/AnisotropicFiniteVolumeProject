@@ -18,7 +18,7 @@ end
 
 function femgrad(itri,coord,pointlist)
     C=@MMatrix zeros(3,3)
-    AnisoFV.coordmatrix!(C,coord,pointlist,itri)
+    coordmatrix!(C,coord,pointlist,itri)
     G0= @MMatrix zeros(3,3)
     I=@MMatrix zeros(3,3)
     for i=1:3 
@@ -94,7 +94,6 @@ end
 
 Dirichlet()=1.0e30
 
-
 function  fem_assemble!(A_h, # Global stiffness matrix
                         F_h, # Right hand side of FEM problem
                         grid, # Discretization grid  
@@ -146,7 +145,14 @@ function  fem_assemble!(A_h, # Global stiffness matrix
 end
 
 
+"""
+    fem_solve(grid,Λ,f,β)
 
+Solve anisotropic diffusion problem with finite elements.
+
+Defined in $(joinpath("src",basename(@__FILE__)))
+
+"""
 function fem_solve(grid,Λ,f,β)
     # Initialize sparse matrix and right hand side
     n=num_nodes(grid)

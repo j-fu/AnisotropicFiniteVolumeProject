@@ -1,5 +1,6 @@
-module AnisoFV
+module AnisotropicFiniteVolumeProject
 using ExtendableGrids, ExtendableSparse, Triangulate
+using SimplexGridFactory
 using LinearAlgebra,SparseArrays
 using Symbolics,SparseDiffTools
 using Tensors
@@ -25,8 +26,10 @@ include("evolution.jl")
 export EvolutionSystem,evolve,stdsparse,statsolve
 
 include("operators.jl")
-export ∇Λ∇, finitebell,ΛMatrix
+export ∇Λ∇, finitebell,finitebell_core,ΛMatrix,d1finitebell,d2finitebell,rotator
 
+include("grids.jl")
+export rgrid,tgrid
 
 end # module
 
