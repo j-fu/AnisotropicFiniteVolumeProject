@@ -17,9 +17,9 @@ end
 # ╔═╡ 60941eaa-1aea-11eb-1277-97b991548781
 begin 
 	using Pkg
-    using Revise
 	Pkg.activate(joinpath(@__DIR__,".."))
-	using AnisoFV
+	using AnisotropicFiniteVolumeProject
+    using Revise
     using PlutoUI
     EL=PlutoUI.ExperimentalLayout
 	using GridVisualize

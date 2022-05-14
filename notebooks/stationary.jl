@@ -7,151 +7,277 @@ using InteractiveUtils
 # ╔═╡ 60941eaa-1aea-11eb-1277-97b991548781
 begin 
 	using Pkg
-    using Revise
 	Pkg.activate(joinpath(@__DIR__,".."))
-	using AnisoFV
+    using Revise
+	using AnisotropicFiniteVolumeProject
     using Polynomials
 	
     using PlutoUI
     EL=PlutoUI.ExperimentalLayout
-	using Tensors	
 	using GridVisualize
-	using Tensors
+	using PyPlot
 	using VoronoiFVM
 	using ExtendableGrids
-	import PlutoVista
-	default_plotter!(PlutoVista)
+	using DrWatson
+	default_plotter!(PyPlot)
+	PyPlot.svg(true)
 	using LinearAlgebra
+	TableOfContents()
 end
+
+# ╔═╡ de8b10df-42d6-43a5-b9d7-59bf7a4d99f3
+function mysave(fname,v)
+    GridVisualize.save(plotsdir(fname),v)
+	@info """saved to $(plotsdir(fname))"""
+end
+
+# ╔═╡ 223d2526-9e76-43c4-8ba6-78b56342b56c
+function mysave(fname)
+    savefig(plotsdir(fname))
+	@info """saved to $(plotsdir(fname))"""
+end
+
+# ╔═╡ 9eb0b277-5a96-436e-a233-051edfa7cb24
+md"""
+# Stationary anisotropic Problem
+"""
+
+# ╔═╡ acaed9cb-5ed0-4137-b65c-904b26b4848f
+md"""
+## Tools to define a stationary test problem
+
+### Twice differentiable function with finite support
+"""
+
+# ╔═╡ 207a355d-ff8f-4404-90db-daf9341f4f98
+@doc finitebell_core
+
+# ╔═╡ 33755343-8709-4c88-95f9-9758f1d61f26
+@doc finitebell
+
+# ╔═╡ e5a25fb2-4525-4ca4-b155-b00f90fea311
+@doc d1finitebell
+
+# ╔═╡ 6b417d68-7428-4ebe-8932-eec7424f100c
+@doc d2finitebell
 
 # ╔═╡ cfc41a2a-3df9-4fc2-82ec-2769b25e9d56
-X=-1.1:0.01:1.1
-
-# ╔═╡ 332aaa75-55ee-403b-96cf-93c9e502a5bb
-g1=simplexgrid(X)
-
-# ╔═╡ d64d2ece-0ef5-4922-9f7f-38b0e9e6ac4e
-g2=simplexgrid(X,X)
-
-# ╔═╡ fcfe06a0-5506-4874-96fc-00f6b14721db
-fmytest=map(finitebell,g2)
-
-# ╔═╡ 19bc326b-efb6-4546-981a-613555e14977
-dfmytest=map( (x,y)->∇Λ∇(finitebell,[x,y]),g2)
-
-# ╔═╡ 78f7e140-b5e3-4aa8-8396-23c0fcdcc23f
-scalarplot(g2,fmytest,size=(200,200)),
-scalarplot(g2,dfmytest,size=(200,200))
-
-
-# ╔═╡ 2f24a9fc-6065-4d09-a047-79996c9156f8
-fmytest1=map(finitebell,g1)
-
-# ╔═╡ b528af01-0fdb-433a-a4b6-57d798bcf6ce
-dfmytest1=map((x)->∇Λ∇(finitebell,x),g1)
-
-# ╔═╡ 420455d7-956a-4f2d-98fc-49681d81bb79
-let
-	v=GridVisualizer(;size=(500,200))
-	scalarplot!(v,g1,fmytest1)
-	scalarplot!(v,g1,dfmytest1,clear=false)
+let 
+	X=-1.5:0.01:1.5
+	v=GridVisualizer(size=(600,300),legend=:lb)
+    scalarplot!(v,X,finitebell.(X),color=:red,label="finitebell")
+    scalarplot!(v,X,d1finitebell.(X),clear=false,color=:green,label="d1finitebell")
+    scalarplot!(v,X,d2finitebell.(X),clear=false,color=:blue,label="d2finitebell")
+	mysave("finitebell1d.png",v)
 	reveal(v)
 end
 
-# ╔═╡ e3d98f8e-05d2-4098-b02d-60ac69e50b42
-xx=0:0.01:1
+# ╔═╡ 093cada5-9eba-40e1-bff7-d7aee5cf6b19
+md"""
+### ∇Λ∇ operator
+"""
 
-# ╔═╡ b2e197c1-616f-465e-b6cf-23b033947249
-dp(x)=Tensors.gradient(AnisoFV.finitebell_core,x)
+# ╔═╡ d64a304c-e970-4c1a-b2d6-8314bd69df98
+@doc ∇Λ∇
 
-# ╔═╡ 88b409a6-2db2-494b-aac0-741617a51e38
-d2p(x)=Tensors.gradient(dp,x)
+# ╔═╡ 9669a6e5-0593-49ed-9fa6-35a1e3986548
+md"""
+This operator can be used to calcualate the Laplacian of the finitebell function
+which is visualized below.
+"""
 
-# ╔═╡ f5fa1f92-9cb2-41e2-9c6f-9c30cc5e6f9f
+# ╔═╡ 344b51fb-2a23-4620-ac30-4129e7e48df7
 let
-    v=GridVisualizer(size=(500,200),legend=:lb)
-    scalarplot!(v,xx,AnisoFV.finitebell_core.(xx),color=:red,label="p")
-    scalarplot!(v,xx,dp.(xx),clear=false,color=:green,label="dp")
-    scalarplot!(v,xx,d2p.(xx),clear=false,color=:blue,label="d2p")
+	X=-1.5:0.01:1.5
+	g2=simplexgrid(X,X)
+	fb=map(finitebell, g2)
+	d2fb=map((x,y)->∇Λ∇(finitebell,[x,y]), g2)
+
+	vis=GridVisualizer(layout=(1,2),size=(600,300))
+	scalarplot!(vis[1,1],g2,fb,title="finitebell",limits=(-1,1),colormap=:bwr)
+	scalarplot!(vis[1,2],g2,d2fb,title="Δ finitebell",limits=(-10,10),colormap=:bwr)
+		mysave("finitebell2d.png",vis)
+	reveal(vis)
+end
+
+# ╔═╡ 04838dde-4924-4b67-b9b2-1ecd534fe861
+@doc ΛMatrix
+
+# ╔═╡ 86c83f88-bf48-48c9-ba57-b6dae3574c18
+ΛMatrix(10,0)
+
+# ╔═╡ 101e6962-1046-4f98-a363-a666c026b95e
+ΛMatrix(10,π/2)
+
+# ╔═╡ 06abe474-3862-440e-9e02-59fb897b1562
+ΛMatrix(10,π/4)
+
+# ╔═╡ 619675e5-abea-48e1-83ef-3f0ff4395eed
+md"""
+### Functions to create grids
+"""
+
+# ╔═╡ 54af9427-239b-4cc2-adaf-c443edb90df3
+@doc rgrid
+
+# ╔═╡ 250cbba5-334a-494c-9d03-f72e8fb38937
+@doc tgrid
+
+# ╔═╡ 3e191aec-1121-4584-99e9-953c894fb13c
+let
+	v=GridVisualizer(size=(600,300),layout=(1,2))
+    gridplot!(v[1,1],rgrid(h=0.1,scale=1.1),linewidth=0.5,title="rgrid")
+     gridplot!(v[1,2],tgrid(h=0.1,scale=1.1),linewidth=0.5,title="tgrid")
+	mysave("grids.png",v)
 	reveal(v)
 end
 
-# ╔═╡ d049319d-9a8e-4293-af5c-2671a5b95b64
-laplaceflux(y,u,edge)=y[1]=u[1,1]-u[1,2]
+# ╔═╡ 7b273b52-be4f-4a32-9561-d4abfb79761b
+md"""
+## Test problem
 
-# ╔═╡ 52ee2b7b-3115-406b-9dbc-27702edf2b0e
-bcondition(y,u,node)=boundary_dirichlet!(y,u,node,value=0)
+```math
+    -\nabla \cdot (\Lambda \nabla u)=f
+```
+with homogeneous Dirichlet boundary condition. We choose `f` sucht that the exact solution is our `finitebell` function.
+"""
 
-# ╔═╡ 1048e68d-5a94-463c-bf6a-e5d88df74373
-sys1=VoronoiFVM.System(g1;flux=laplaceflux,bcondition,source=(y,node)->y[1]=-∇Λ∇( finitebell,node[1]),species=[1])
+# ╔═╡ 7738bc89-efd4-4b37-b5b4-0de400657f7e
+exact(grid)=map((x,y)->finitebell(x,y),grid)
 
-# ╔═╡ 69994ef7-874d-4a97-9109-19ea4b6c00ee
-sol1=solve(sys1)
+# ╔═╡ a20f6356-f05f-4927-a0dd-6226b33c1433
+maxlev=5
 
-# ╔═╡ 846ccb48-2502-471a-941e-4cc363c784d1
-scalarplot(g1,sol1[1,:],size=(500,200))
-
-# ╔═╡ a4b52c86-73d2-482c-a790-8349de1ec5fe
-sys2=VoronoiFVM.System(g2;flux=laplaceflux,bcondition,source=(y,node)->y[1]=-∇Λ∇( finitebell,[node[1],node[2]]),species=[1])
-
-# ╔═╡ 0cef4a25-19b7-4790-adca-22daf45f31bd
-sol2=solve(sys2)
-
-# ╔═╡ 4c74e06a-2e97-4fdd-afca-6925582b1f25
-scalarplot(g2,sol2[1,:],size=(300,300))
-
-# ╔═╡ b4d3e741-dff0-4165-bd51-09fa9bc20aff
-α=π/4;
-
-# ╔═╡ 35a97451-04c8-4759-b60d-3fcb77de3d45
-Λ11=1000;
-
-# ╔═╡ dbdea373-a6af-4a4b-a682-db79589778ec
-D=ΛMatrix(Λ11,α)
-
-# ╔═╡ 9816bb5b-8619-4df4-a288-eaf467073ca5
-function dflux(y,u,edge)
-	normal=edge[:,1]-edge[:,2]
-	normal=normal/norm(normal)
-	d=norm(D*normal)
-	y[1]=d*(u[1,1]-u[1,2])
+# ╔═╡ ed8a0ecd-5563-4351-8291-b35cabfc1b03
+function fourtests(test::Function,fname;h=0.1,scale=1.1)
+	vis=GridVisualizer(layout=(2,2),resolution=(700,600))
+	rg=rgrid(;h,scale)
+	tg=tgrid(;h,scale)
+	scalarplot!(vis[1,1],rg,test(rg,ΛMatrix(100,0)),colormap=:bwr,flimits=(-1,1),levels=-1:0.2:1,title="rgrid,ΛMatrix(100,0)")
+	scalarplot!(vis[2,1],rg,test(rg,ΛMatrix(100,π/4)),colormap=:bwr,flimits=(-1,1),levels=-1:0.2:1,title="rgrid,ΛMatrix(100,π/4)")
+	scalarplot!(vis[1,2],tg,test(tg,ΛMatrix(100,0)),colormap=:bwr,flimits=(-1,1),levels=-1:0.2:1,title="tgrid,ΛMatrix(100,0)")
+	scalarplot!(vis[2,2],tg,test(tg,ΛMatrix(100,π/4)),colormap=:bwr,flimits=(-1,1),levels=-1:0.2:1,title="tgrid,ΛMatrix(100,π/4)")
+	mysave(fname,vis)
+	reveal(vis)
 end
 
-# ╔═╡ 055bd291-f390-464e-910c-f3fe2196cb7e
-DX=range(-1.1,1.1,length=100)
+# ╔═╡ 687f9d1e-4dc1-4791-a4c4-28f7e6b46983
+H=[0.2*2.0^-i for i=0:maxlev-1]
 
-# ╔═╡ 12b79e34-23a4-41b5-8907-0f7e69687037
-dgrid2=simplexgrid(DX,DX)
+# ╔═╡ 50809264-3603-41d9-923c-5a163f221344
+function fourconv(test::Function;scale=1.1,maxlev=3)
+	
+	xnorm(g,u)=fenorms(u,g[Coordinates],g[CellNodes])
+	function gtest(xgrid,Λ,H)
+		norms=[]
+		for h∈H
+			g=xgrid(;scale,h)
+	  	    push!(norms,xnorm(g,test(g,Λ)-exact(g)))
+		end
+		norms
+	end
+    gtest(rgrid,ΛMatrix(100,0),H),		
+    gtest(rgrid,ΛMatrix(100,π/4),H),		
+    gtest(tgrid,ΛMatrix(100,0),H),		
+    gtest(tgrid,ΛMatrix(100,π/4),H)		
 
-# ╔═╡ d5b8095a-197b-46c7-a97d-6bc60c9571a7
-gridplot(dgrid2)
+end
 
-# ╔═╡ b2a0a944-5ec9-4919-aecc-9c85f14183ae
-dsys2=VoronoiFVM.System(dgrid2;flux=dflux,bcondition,source=(y,node)->y[1]=-∇Λ∇( finitebell,[node[1],node[2]],D),species=[1])
+# ╔═╡ 34d148a4-8994-4f7f-9774-40a63644bcee
+md"""
+### Voronoi FVM
+We define a VoronoiFVM.jl system and solve it. Here we project the diffusion tensor onto the grid edge.
+"""
 
-# ╔═╡ f40084fa-fb00-41d7-83b9-d255c0095aad
-dsol2=solve(dsys2)[1,:]
+# ╔═╡ d86eef8a-99e1-4fc4-ba9f-213a41b86598
+function VoronoiFVMTest(grid,Λ)
 
-# ╔═╡ f5f42b6e-9129-48cd-930a-b0e53adb4b14
-esol2=map((x,y)->finitebell(x,y),dgrid2)
+	function flux(y,u,edge)
+		normal=edge[:,1]-edge[:,2]
+		normal=normal/norm(normal)
+		λ=norm(Λ*normal)
+		y[1]=λ*(u[1,1]-u[1,2])
+    end
 
-# ╔═╡ 7da8c293-969d-440f-a498-8e8fa134b36c
-femsol=fem_solve(dgrid2,D,(x,y)-> -∇Λ∇( finitebell,[x,y],D),(x,y)->0)
+	function source(y,node)
+		y[1]=-∇Λ∇(finitebell,[node[1],node[2]],Λ)	
+	end
+	
+	function bcondition(y,u,bnode)
+		boundary_dirichlet!(y,u,bnode,value=0)		
+	end
+    sys=VoronoiFVM.System(grid;flux,bcondition,source,species=[1])
+	sol=solve(sys)
+	sol[1,:]
+end
 
-# ╔═╡ df92cc36-115a-4d9a-a5d3-5cf5f84c8bea
-afvmsol=afvm_solve(dgrid2,D,(x,y)-> -∇Λ∇( finitebell,[x,y],D),(x,y)->0)
+# ╔═╡ 4b439328-18d9-42fc-9575-85594a342b62
+fourtests(VoronoiFVMTest,"voronoifvm.png")
 
-# ╔═╡ 56186905-a079-4de5-8d9a-13fa6fd87579
-EL.grid([
-	scalarplot(dgrid2,dsol2,size=(300,300)) scalarplot(dgrid2,femsol,size=(300,300))
-	scalarplot(dgrid2,afvmsol,size=(300,300))  md""""""])
+# ╔═╡ 77ad9955-09bd-4042-9aad-0f94fa904ff7
+VoronoiFVMNorms=fourconv(VoronoiFVMTest;maxlev)
+
+# ╔═╡ 8b86f35e-ff6b-482c-b150-796da7db68ee
+md"""
+### FEM
+"""
+
+# ╔═╡ 49b5bc2a-96df-483d-862a-e0ee22f5e0b0
+@doc fem_solve
+
+# ╔═╡ 84ebe218-4dd0-440a-91ce-f37c5d06a341
+function FEMTest(grid,Λ)
+	f(x,y)=-∇Λ∇(finitebell,[x,y],Λ)
+	β(x,y)=0.0
+	fem_solve(grid,Λ,f,β)
+end
+
+# ╔═╡ 251eeb13-2730-413f-896f-5738fda9e801
+fourtests(FEMTest,"fem.png")
+
+# ╔═╡ 80ca622c-a1ed-4216-b25c-428e591ca32a
+FEMNorms=fourconv(FEMTest;maxlev)
 
 # ╔═╡ 97dc31e8-a4e5-4294-b214-da3e53089cc8
 md"""
-## AD assembly
+### "Simple" Barycentric finite volumes
 """
 
-# ╔═╡ e256d9f9-8c60-4c53-8816-7b352b8b1aa6
+# ╔═╡ 648a48f0-2af4-4b9e-80f5-1926653c02ee
+@doc EvolutionSystem
+
+# ╔═╡ 5f53d081-97ca-4763-9b43-5822b97dd6a2
+finitebellx(x,y)=finitebell(x,y)+0.01*rand()
+
+# ╔═╡ 7511e717-3ad2-4d3b-8445-b11b5a5bb3fc
+md"""
+### Nonlinear BaryFVM, simple upwind
+"""
+
+# ╔═╡ 038dd7cb-07eb-481c-9459-29afab26c9bb
+md"""
+Logarithm cut of at negative values
+"""
+
+# ╔═╡ 1cfc228b-fa93-49e7-98c0-0f8d8dc45f8d
+xlog(u)= u<1.0e-20 ? log(1.0e-20) : log(u)
+
+# ╔═╡ 6fd997bd-1641-4d4b-a327-bea39cea4ba0
+function homogeneous_dirichlet(f,u,grid)
+    bfacenodes=grid[BFaceNodes]
+    nbfaces=size(bfacenodes,2)
+    bfaceregions=grid[BFaceRegions]
+    for ibface in 1:nbfaces
+        for idim=1:2
+            i1=bfacenodes[idim,ibface];
+            f[i1]+=1.0e30*u[i1]
+        end
+    end
+end
+
+# ╔═╡ 823f8838-a6ee-4ccc-8f10-27510499e01b
+function BaryFVMTest1(grid,Λ)
+# Λ is part of edge factors e!
 function diffusion1(f,u,uold,sys,Δt)
 	e=sys.e
 	ω=sys.ω
@@ -170,39 +296,28 @@ function diffusion1(f,u,uold,sys,Δt)
 		end
 	    for inode=1:3
 			k=tris[inode,itri]
-			f[k]+=ω[inode,itri]*∇Λ∇(finitebell,coord[:,k],D)
+			f[k]+=ω[inode,itri]*∇Λ∇(finitebell,coord[:,k],Λ)
 		end
 	end
-
-	bfacenodes=sys.grid[BFaceNodes]
-    nbfaces=size(bfacenodes,2)
-    bfaceregions=sys.grid[BFaceRegions]
-    for ibface in 1:nbfaces
-        for idim=1:2
-            i1=bfacenodes[idim,ibface];
-	        x=coord[1,i1]
-	        y=coord[2,i1]
-            f[i1]+=1.0e30*u[i1]
-        end
-    end
+ homogeneous_dirichlet(f,u,sys.grid)	
+end
+	
+    sys=EvolutionSystem(grid,diffusion1;jac=stdsparse(grid),Λ=Λ);
+	
+	statsolve(sys,map(finitebellx,grid))
+	
 end
 
-# ╔═╡ eade662b-dfba-49ea-98fc-7e40a355ce67
-adsys1=EvolutionSystem(dgrid2,diffusion1;jac=stdsparse(dgrid2),Λ=D);
+# ╔═╡ d5d60909-cf40-4b0f-9626-98e2b1fb853a
+fourtests(BaryFVMTest1,"baryfvm1.png")
 
-# ╔═╡ 5f53d081-97ca-4763-9b43-5822b97dd6a2
-finitebellx(x,y)=finitebell(x,y)+0.01*rand()
-
-# ╔═╡ a4680d1a-ffb7-4f9e-81a2-f966eb70ff72
-adsol1=statsolve(adsys1,map(finitebellx,dgrid2))
-
-# ╔═╡ 021a1379-445a-4ca5-9546-d2b64b2f487b
-scalarplot(dgrid2,adsol1,size=(300,300)) 
-
-# ╔═╡ 1cfc228b-fa93-49e7-98c0-0f8d8dc45f8d
-xlog(u)= u<1.0e-20 ? log(1.0e-20) : log(u)
+# ╔═╡ e758fc09-aa0a-4ed3-852a-faa30bc9ffb7
+BaryFVMNorms1=fourconv(BaryFVMTest1;maxlev)
 
 # ╔═╡ 254b0749-55bb-49fb-8a3e-de4ace4560f0
+function BaryFVMTest2(grid,Λ)
+# Λ is part of edge factors e!
+
 function diffusion2(f,u,uold,sys,Δt)
 	e=sys.e
 	ω=sys.ω
@@ -222,33 +337,35 @@ function diffusion2(f,u,uold,sys,Δt)
 		end
 	for inode=1:3
 			k=tris[inode,itri]
-			f[k]+=ω[inode,itri]*∇Λ∇(finitebell,coord[:,k],D)
+			f[k]+=ω[inode,itri]*∇Λ∇(finitebell,coord[:,k],Λ)
 		end
 	end
-
-	bfacenodes=sys.grid[BFaceNodes]
-    nbfaces=size(bfacenodes,2)
-    bfaceregions=sys.grid[BFaceRegions]
-    for ibface in 1:nbfaces
-        for idim=1:2
-            i1=bfacenodes[idim,ibface];
-	        x=coord[1,i1]
-	        y=coord[2,i1]
-            f[i1]+=1.0e30*u[i1]
-        end
-    end
+ homogeneous_dirichlet(f,u,sys.grid)	
+	
+end	
+    sys=EvolutionSystem(grid,diffusion2;jac=stdsparse(grid),Λ=Λ);
+	
+	statsolve(sys,map(finitebellx,grid))
+	
 end
 
-# ╔═╡ 9ba2d677-36ff-4ff9-ba05-f55ad38e2cd0
-adsys2=EvolutionSystem(dgrid2,diffusion2;jac=stdsparse(dgrid2),Λ=D);
+	
 
-# ╔═╡ f9fc167e-247d-4ac9-974b-6605c8ef76e3
-adsol2=statsolve(adsys2,map(finitebellx,dgrid2))
+# ╔═╡ 067d2d91-8f8f-4e67-90cd-e3f45c082238
+fourtests(BaryFVMTest2,"baryfvm2.png")
 
-# ╔═╡ 791e426f-275e-4765-b990-e40491e21680
-scalarplot(dgrid2,adsol2,size=(300,300)) 
+# ╔═╡ 7545922b-6af4-4a76-bfca-10896fbf97d2
+BaryFVMNorms2=fourconv(BaryFVMTest2;maxlev)
+
+# ╔═╡ daf2aeea-e646-4364-9876-63a96b993220
+md"""
+### Nonlinear BaryFVM, better upwind
+"""
 
 # ╔═╡ 60e89983-7236-4653-b3ae-b400034921f5
+function BaryFVMTest3(grid,Λ)
+
+
 function diffusion3(f,u,uold,sys,Δt)
 	e=sys.e
 	ω=sys.ω
@@ -269,42 +386,48 @@ function diffusion3(f,u,uold,sys,Δt)
 		end
 	for inode=1:3
 			k=tris[inode,itri]
-			f[k]+=ω[inode,itri]*∇Λ∇(finitebell,coord[:,k],D)
+			f[k]+=ω[inode,itri]*∇Λ∇(finitebell,coord[:,k],Λ)
 		end
 	end
-
-	bfacenodes=sys.grid[BFaceNodes]
-    nbfaces=size(bfacenodes,2)
-    bfaceregions=sys.grid[BFaceRegions]
-    for ibface in 1:nbfaces
-        for idim=1:2
-            i1=bfacenodes[idim,ibface];
-	        x=coord[1,i1]
-	        y=coord[2,i1]
-            f[i1]+=1.0e30*u[i1]
-        end
-    end
+ homogeneous_dirichlet(f,u,sys.grid)	
+end 
+	
+	sys=EvolutionSystem(grid,diffusion3;jac=stdsparse(grid),Λ=Λ);
+	
+	statsolve(sys,map(finitebellx,grid))
+	
 end
 
-# ╔═╡ 5fe7531b-bdc4-4fee-af11-6845b74fdfd9
-adsys3=EvolutionSystem(dgrid2,diffusion3;jac=stdsparse(dgrid2),Λ=D);
 
-# ╔═╡ a862c1cc-9473-4437-a368-5fe0d7cb41b3
-adsol3=statsolve(adsys3,map(finitebellx,dgrid2))
 
-# ╔═╡ a3af6c17-339a-4ef0-bbe8-bee338c38a6a
-scalarplot(dgrid2,adsol3,size=(300,300)) 
+	
+
+# ╔═╡ 2cb683c4-6050-4bc7-9ee1-e90b7b0b8117
+fourtests(BaryFVMTest3,"baryfvm3.png")
+
+# ╔═╡ 519a182b-a1ab-4e02-929e-56f2a5e3f7c4
+BaryFVMNorms3=fourconv(BaryFVMTest3;maxlev)
+
+# ╔═╡ 077b2362-7963-462e-8509-fe1da48d6cdb
+md"""
+### Nonlinear BaryFVM, Quenjel scheme
+"""
+
+# ╔═╡ 32e2907d-ea3a-48cc-8931-901ad15b3c57
+md"""
+Cut square root function
+"""
 
 # ╔═╡ 1a6b3bca-ebeb-49d8-b7af-04fc5394536f
 xsqrt(x)= x<0 ? 0 : sqrt(x+1.0e-20)
 
 # ╔═╡ 0ebac4aa-eb69-4cd3-a2eb-e6276ba07ded
+function BaryFVMTest4(grid,Λ)
+
 function diffusion4(f,u,uold,sys,Δt)
-	e=sys.e
-	ω=sys.ω
 	tris::Matrix{Int64}=sys.grid[CellNodes]
 	coord::Matrix{Float64}=sys.grid[Coordinates]
-	ntri=size(e,2)
+	ntri=size(tris,2)
 	en=[2 3 ; 3 1 ; 1 2 ]'
 	fill!(f,0.0)
 
@@ -320,7 +443,7 @@ function diffusion4(f,u,uold,sys,Δt)
 			j=en[2,iedge]
 			ϕij[iedge]=0.5*(ϕi[i]+ϕi[j])		
 		end
-		ω,e=baryfactors(itri,ϕij,D,coord,tris)
+		ω,e=baryfactors(itri,ϕij,Λ,coord,tris)
 		for iedge=1:3
 			i=en[1,iedge]		
 			j=en[2,iedge]
@@ -335,101 +458,163 @@ function diffusion4(f,u,uold,sys,Δt)
 		
 	for inode=1:3
 			k=tris[inode,itri]
-			f[k]+=ω[inode]*∇Λ∇(finitebell,coord[:,k],D)
+			f[k]+=ω[inode]*∇Λ∇(finitebell,coord[:,k],Λ)
 		end
 	end
-
-	bfacenodes=sys.grid[BFaceNodes]
-    nbfaces=size(bfacenodes,2)
-    bfaceregions=sys.grid[BFaceRegions]
-    for ibface in 1:nbfaces
-        for idim=1:2
-            i1=bfacenodes[idim,ibface];
-	        x=coord[1,i1]
-	        y=coord[2,i1]
-            f[i1]+=1.0e30*u[i1]
-        end
-    end
+ homogeneous_dirichlet(f,u,sys.grid)	
+end	
+	
+	sys=EvolutionSystem(grid,diffusion4;jac=stdsparse(grid),Λ=Λ);
+	
+	statsolve(sys,map(finitebellx,grid))
+	
 end
 
-# ╔═╡ 59a477b8-b487-40ab-8dde-b7c26dd4857b
-adsys4=EvolutionSystem(dgrid2,diffusion4;jac=stdsparse(dgrid2),Λ=D);
 
-# ╔═╡ 5e44ba9c-0174-4a18-ad03-3549666ec898
-adsol4=statsolve(adsys4,map(finitebellx,dgrid2))
 
-# ╔═╡ e29c74af-0283-42d9-90e0-bbe974752091
-scalarplot(dgrid2,adsol4,size=(300,300)) 
+	
 
-# ╔═╡ b87af7fb-2040-44dd-a22e-bdfc9aee388c
-xnorm(u)=fenorms(u,dgrid2[Coordinates],dgrid2[CellNodes])[1]
+# ╔═╡ e73007ea-ea80-456d-afc0-a28c5f6d8f06
+fourtests(BaryFVMTest4,"baryfvm4.png")
 
-# ╔═╡ fa5f82ed-1606-41ee-b070-65f4514a8404
-xnorm(esol2-dsol2),xnorm(esol2-femsol),xnorm(esol2-afvmsol)
+# ╔═╡ 8c48a02f-fdc0-473e-8cc2-bf47fdd120c9
+BaryFVMNorms4=fourconv(BaryFVMTest4;maxlev)
 
-# ╔═╡ b9991c77-8d1f-411d-a6c3-3387be874624
-xnorm(esol2-adsol1),xnorm(esol2-adsol2),xnorm(esol2-adsol3),xnorm(esol2-adsol4)
+# ╔═╡ c651e025-eb3f-4e80-9aac-2265ffa52439
+l2(case,norms)=[norms[case][i][1] for i=1:length(norms[case])]
+
+# ╔═╡ fac87491-af52-4fbd-98b4-b0480a26da20
+h1(case,norms)=[norms[case][i][2] for i=1:length(norms[case])]
+
+# ╔═╡ 18c38fb8-e285-4ed8-a7d9-144cb4e9ab53
+function plotnorms(nrm; addplot=()->())
+	clf()
+	function plots(case)
+	xlabel("h")
+	ylabel("norms")
+    PyPlot.grid()
+	loglog(H,nrm(case,VoronoiFVMNorms),"+-",label="Voronoi",markersize=8)
+	loglog(H,nrm(case,FEMNorms),"o-",label="FEM",markersize=5)
+	loglog(H,nrm(case,BaryFVMNorms1),label="Bary1")
+	loglog(H,nrm(case,BaryFVMNorms2),"o-",label="Bary2")
+	loglog(H,nrm(case,BaryFVMNorms3),label="Bary3")
+	loglog(H,nrm(case,BaryFVMNorms4),label="Bary4")
+    addplot()
+    legend(loc="lower right")
+	end
+
+	subplot(221)
+	title("rgrid,ΛMatrix(100,0)")
+	plots(1)
+
+	subplot(223)
+	title("rgrid,ΛMatrix(100,π/4)")
+	plots(2)
+
+	subplot(222)
+	title("tgrid,ΛMatrix(100,0)")
+	plots(3)
+
+	subplot(224)
+	title("tgrid,ΛMatrix(100,π/4)")
+	plots(4)
+
+	
+	fig=gcf()
+	tight_layout()
+	fig.set_size_inches(7,7)
+	fig
+end
+
+# ╔═╡ 8d520cbd-08e3-41e9-93fd-4187e7b91153
+let
+	function addplot()
+     	loglog(H,H.^2/3,color=(0,0,0),label="O(h^2)")		
+    	loglog(H,H,"--",color=(0,0,0),label="O(h)")		
+	end
+	plotnorms(l2;addplot)
+	mysave("l2conv.png")
+	gcf()
+end
+
+# ╔═╡ c823d4ac-9d79-40ba-8203-6a96de0727cc
+let
+	function addplot()
+     	loglog(H,H.^2/3,color=(0,0,0),label="O(h^2)")		
+    	loglog(H,2H,"--",color=(0,0,0),label="O(h)")		
+	end
+	plotnorms(h1;addplot)
+    mysave("h1conv.png")	
+	gcf()
+end
 
 # ╔═╡ 23273fba-31cf-4f3f-b70a-866dac8d8085
 html"<hr>"
 
 # ╔═╡ Cell order:
 # ╠═60941eaa-1aea-11eb-1277-97b991548781
-# ╠═cfc41a2a-3df9-4fc2-82ec-2769b25e9d56
-# ╠═332aaa75-55ee-403b-96cf-93c9e502a5bb
-# ╠═d64d2ece-0ef5-4922-9f7f-38b0e9e6ac4e
-# ╠═fcfe06a0-5506-4874-96fc-00f6b14721db
-# ╠═19bc326b-efb6-4546-981a-613555e14977
-# ╠═78f7e140-b5e3-4aa8-8396-23c0fcdcc23f
-# ╠═2f24a9fc-6065-4d09-a047-79996c9156f8
-# ╠═b528af01-0fdb-433a-a4b6-57d798bcf6ce
-# ╠═420455d7-956a-4f2d-98fc-49681d81bb79
-# ╠═e3d98f8e-05d2-4098-b02d-60ac69e50b42
-# ╠═b2e197c1-616f-465e-b6cf-23b033947249
-# ╠═88b409a6-2db2-494b-aac0-741617a51e38
-# ╠═f5fa1f92-9cb2-41e2-9c6f-9c30cc5e6f9f
-# ╠═d049319d-9a8e-4293-af5c-2671a5b95b64
-# ╠═52ee2b7b-3115-406b-9dbc-27702edf2b0e
-# ╠═1048e68d-5a94-463c-bf6a-e5d88df74373
-# ╠═69994ef7-874d-4a97-9109-19ea4b6c00ee
-# ╠═846ccb48-2502-471a-941e-4cc363c784d1
-# ╠═a4b52c86-73d2-482c-a790-8349de1ec5fe
-# ╠═0cef4a25-19b7-4790-adca-22daf45f31bd
-# ╠═4c74e06a-2e97-4fdd-afca-6925582b1f25
-# ╠═b4d3e741-dff0-4165-bd51-09fa9bc20aff
-# ╠═35a97451-04c8-4759-b60d-3fcb77de3d45
-# ╠═dbdea373-a6af-4a4b-a682-db79589778ec
-# ╠═9816bb5b-8619-4df4-a288-eaf467073ca5
-# ╠═055bd291-f390-464e-910c-f3fe2196cb7e
-# ╠═12b79e34-23a4-41b5-8907-0f7e69687037
-# ╠═d5b8095a-197b-46c7-a97d-6bc60c9571a7
-# ╠═b2a0a944-5ec9-4919-aecc-9c85f14183ae
-# ╠═f40084fa-fb00-41d7-83b9-d255c0095aad
-# ╠═f5f42b6e-9129-48cd-930a-b0e53adb4b14
-# ╠═56186905-a079-4de5-8d9a-13fa6fd87579
-# ╠═fa5f82ed-1606-41ee-b070-65f4514a8404
-# ╠═7da8c293-969d-440f-a498-8e8fa134b36c
-# ╠═df92cc36-115a-4d9a-a5d3-5cf5f84c8bea
+# ╠═de8b10df-42d6-43a5-b9d7-59bf7a4d99f3
+# ╠═223d2526-9e76-43c4-8ba6-78b56342b56c
+# ╟─9eb0b277-5a96-436e-a233-051edfa7cb24
+# ╟─acaed9cb-5ed0-4137-b65c-904b26b4848f
+# ╟─207a355d-ff8f-4404-90db-daf9341f4f98
+# ╟─33755343-8709-4c88-95f9-9758f1d61f26
+# ╟─e5a25fb2-4525-4ca4-b155-b00f90fea311
+# ╟─6b417d68-7428-4ebe-8932-eec7424f100c
+# ╟─cfc41a2a-3df9-4fc2-82ec-2769b25e9d56
+# ╟─093cada5-9eba-40e1-bff7-d7aee5cf6b19
+# ╟─d64a304c-e970-4c1a-b2d6-8314bd69df98
+# ╟─9669a6e5-0593-49ed-9fa6-35a1e3986548
+# ╠═344b51fb-2a23-4620-ac30-4129e7e48df7
+# ╟─04838dde-4924-4b67-b9b2-1ecd534fe861
+# ╠═86c83f88-bf48-48c9-ba57-b6dae3574c18
+# ╠═101e6962-1046-4f98-a363-a666c026b95e
+# ╠═06abe474-3862-440e-9e02-59fb897b1562
+# ╟─619675e5-abea-48e1-83ef-3f0ff4395eed
+# ╟─54af9427-239b-4cc2-adaf-c443edb90df3
+# ╟─250cbba5-334a-494c-9d03-f72e8fb38937
+# ╟─3e191aec-1121-4584-99e9-953c894fb13c
+# ╟─7b273b52-be4f-4a32-9561-d4abfb79761b
+# ╠═7738bc89-efd4-4b37-b5b4-0de400657f7e
+# ╠═a20f6356-f05f-4927-a0dd-6226b33c1433
+# ╠═ed8a0ecd-5563-4351-8291-b35cabfc1b03
+# ╠═687f9d1e-4dc1-4791-a4c4-28f7e6b46983
+# ╠═50809264-3603-41d9-923c-5a163f221344
+# ╟─34d148a4-8994-4f7f-9774-40a63644bcee
+# ╠═d86eef8a-99e1-4fc4-ba9f-213a41b86598
+# ╠═4b439328-18d9-42fc-9575-85594a342b62
+# ╠═77ad9955-09bd-4042-9aad-0f94fa904ff7
+# ╟─8b86f35e-ff6b-482c-b150-796da7db68ee
+# ╟─49b5bc2a-96df-483d-862a-e0ee22f5e0b0
+# ╠═84ebe218-4dd0-440a-91ce-f37c5d06a341
+# ╠═251eeb13-2730-413f-896f-5738fda9e801
+# ╠═80ca622c-a1ed-4216-b25c-428e591ca32a
 # ╟─97dc31e8-a4e5-4294-b214-da3e53089cc8
-# ╠═e256d9f9-8c60-4c53-8816-7b352b8b1aa6
-# ╠═eade662b-dfba-49ea-98fc-7e40a355ce67
+# ╟─648a48f0-2af4-4b9e-80f5-1926653c02ee
+# ╠═823f8838-a6ee-4ccc-8f10-27510499e01b
 # ╠═5f53d081-97ca-4763-9b43-5822b97dd6a2
-# ╠═a4680d1a-ffb7-4f9e-81a2-f966eb70ff72
-# ╠═021a1379-445a-4ca5-9546-d2b64b2f487b
+# ╠═d5d60909-cf40-4b0f-9626-98e2b1fb853a
+# ╠═e758fc09-aa0a-4ed3-852a-faa30bc9ffb7
+# ╟─7511e717-3ad2-4d3b-8445-b11b5a5bb3fc
+# ╟─038dd7cb-07eb-481c-9459-29afab26c9bb
 # ╠═1cfc228b-fa93-49e7-98c0-0f8d8dc45f8d
+# ╠═6fd997bd-1641-4d4b-a327-bea39cea4ba0
 # ╠═254b0749-55bb-49fb-8a3e-de4ace4560f0
-# ╠═9ba2d677-36ff-4ff9-ba05-f55ad38e2cd0
-# ╠═f9fc167e-247d-4ac9-974b-6605c8ef76e3
-# ╠═791e426f-275e-4765-b990-e40491e21680
+# ╠═067d2d91-8f8f-4e67-90cd-e3f45c082238
+# ╠═7545922b-6af4-4a76-bfca-10896fbf97d2
+# ╟─daf2aeea-e646-4364-9876-63a96b993220
 # ╠═60e89983-7236-4653-b3ae-b400034921f5
-# ╠═5fe7531b-bdc4-4fee-af11-6845b74fdfd9
-# ╠═a862c1cc-9473-4437-a368-5fe0d7cb41b3
-# ╠═a3af6c17-339a-4ef0-bbe8-bee338c38a6a
+# ╠═2cb683c4-6050-4bc7-9ee1-e90b7b0b8117
+# ╠═519a182b-a1ab-4e02-929e-56f2a5e3f7c4
+# ╟─077b2362-7963-462e-8509-fe1da48d6cdb
+# ╟─32e2907d-ea3a-48cc-8931-901ad15b3c57
 # ╠═1a6b3bca-ebeb-49d8-b7af-04fc5394536f
 # ╠═0ebac4aa-eb69-4cd3-a2eb-e6276ba07ded
-# ╠═59a477b8-b487-40ab-8dde-b7c26dd4857b
-# ╠═5e44ba9c-0174-4a18-ad03-3549666ec898
-# ╠═e29c74af-0283-42d9-90e0-bbe974752091
-# ╠═b87af7fb-2040-44dd-a22e-bdfc9aee388c
-# ╠═b9991c77-8d1f-411d-a6c3-3387be874624
+# ╠═e73007ea-ea80-456d-afc0-a28c5f6d8f06
+# ╠═8c48a02f-fdc0-473e-8cc2-bf47fdd120c9
+# ╠═c651e025-eb3f-4e80-9aac-2265ffa52439
+# ╠═fac87491-af52-4fbd-98b4-b0480a26da20
+# ╠═18c38fb8-e285-4ed8-a7d9-144cb4e9ab53
+# ╠═8d520cbd-08e3-41e9-93fd-4187e7b91153
+# ╠═c823d4ac-9d79-40ba-8203-6a96de0727cc
 # ╟─23273fba-31cf-4f3f-b70a-866dac8d8085
