@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.4
+# v0.19.9
 
 using Markdown
 using InteractiveUtils
@@ -70,8 +70,18 @@ md"""
 # ╔═╡ 80f88818-a342-4f5d-8a0e-1be36363a268
 h=0.5
 
+# ╔═╡ ee3fa050-a2f5-4b53-97b2-0fd9c95b8935
+md"""
+Create a completely unstructured grid:
+"""
+
 # ╔═╡ 329f3e2d-0105-482c-997a-79a69a7980f1
 ugrid=usquare(;h)
+
+# ╔═╡ 2c380b32-d3b4-415c-9e81-4d105391ea27
+md"""
+Create a triangular grid from structured grid;
+"""
 
 # ╔═╡ 960f5bce-4a24-419d-8e2e-ec3c89861feb
 rgrid=rsquare(;h)
@@ -82,6 +92,15 @@ rgrid=rsquare(;h)
 # ╔═╡ 944e6bc5-6192-468e-b702-66e9da054a3b
 md"""
 ## Scheme 1
+"""
+
+# ╔═╡ d03f3d5d-70d6-4cd0-8fa5-735844b2d454
+md"""
+This schem corresponds to the simple linear finite volume scheme for the equation
+
+```math
+\partial_t u  - \nabla\cdot \Lambda  \nabla u = 0
+```
 """
 
 # ╔═╡ 2938b43a-aefd-402c-beb4-17cfe8b6c870
@@ -119,11 +138,16 @@ tend=10
 # ╔═╡ 9f1da51b-7076-4043-8906-276c1ad76fa5
 @bind t Slider(0:0.01:tend,show_value=true)
 
+# ╔═╡ b7ae126b-651d-4a25-8096-be96b16a6f0e
+md"""
+We calculate the evolution of our finitebell function
+"""
+
 # ╔═╡ 4855ce18-5c8d-419c-9e8a-942e26ab7250
 tsol=evolve(sys,map(finitebell,grid);tend,nsteps=200);
 
 # ╔═╡ 3034215b-e069-4421-942a-f572785b56fd
-vis=GridVisualizer(dim=2,size=(300,300),colormap=:summer,levels=-0.1:0.05:1)
+vis=GridVisualizer(dim=2,size=(300,300),colormap=:summer,levels=5)
 
 # ╔═╡ 3869679c-2011-404b-bec4-725afb76443b
 scalarplot!(vis,grid,tsol(t),show=true)
@@ -134,13 +158,26 @@ function minplot(tsol)
 	scalarplot(tsol.t,mins,size=(600,200))
 end
 
-
 # ╔═╡ 8d4c1451-160a-4932-ab0b-1cd49e086c7e
 minplot(tsol)
+
+# ╔═╡ c340af0e-8a29-4fc8-81c9-d0451367250a
+md"""
+As we see for scheme 1,  though we should expect a nonnegative solution due the the nonnegative initial value, we find negative solution values at the begining of the evolution.
+"""
 
 # ╔═╡ b03775f9-d149-455a-a7a3-99acc46c8db7
 md"""
 ## Scheme 2
+"""
+
+# ╔═╡ b219629b-9c97-4598-8848-3809854d0752
+md"""
+Here, we solve 
+```math
+\partial_t u  - \nabla \cdot \Lambda u \nabla \log u = 0
+```
+using maximum/minimum of  `u` depending on the sign of the entries in the local stiffness matrix.
 """
 
 # ╔═╡ de9145dd-9747-40a0-b00e-9f2c94286a2e
@@ -180,7 +217,7 @@ tsol2=evolve(sys2,map(finitebell,grid);tend,nsteps=200);
 @bind t2 Slider(0:0.01:tend,show_value=true)
 
 # ╔═╡ 6f508fc6-9801-4340-89f9-3ee12e6c1e05
-vis2=GridVisualizer(dim=2,size=(300,300),colormap=:summer,levels=-0.1:0.1:1)
+vis2=GridVisualizer(dim=2,size=(300,300),colormap=:summer,levels=5)
 
 # ╔═╡ 1b91cad4-0abb-4ae5-bd78-dc05b38d6c04
 scalarplot!(vis2,grid,tsol2(t2),show=true)
@@ -188,9 +225,20 @@ scalarplot!(vis2,grid,tsol2(t2),show=true)
 # ╔═╡ b977e12b-b709-4602-82b4-1b3103acbc75
 minplot(tsol2)
 
+# ╔═╡ 1b57391b-6abb-4c8e-b7fe-c83b7859c272
+md"""
+As we see, the solution stays positive.
+"""
+
 # ╔═╡ 9f4321f5-302d-4236-82ae-95e0937e11ac
 md"""
 ## Scheme 3
+"""
+
+# ╔═╡ d58ff61e-44a9-4906-8808-29dae7090ea0
+md"""
+Here we solve the same problem as with scheme2, but use an upwinding
+depnding on the flux 
 """
 
 # ╔═╡ 29bbf6c4-ad4e-4024-808e-2cf2344533af
@@ -228,13 +276,18 @@ tsol3=evolve(sys3,map(finitebell,grid);tend,nsteps=200);
 @bind t3 Slider(0:0.01:tend,show_value=true)
 
 # ╔═╡ 790c47a7-650e-4ced-a056-a96a37f30993
-vis3=GridVisualizer(dim=2,size=(300,300),colormap=:summer,levels=-0.1:0.1:1)
+vis3=GridVisualizer(dim=2,size=(300,300),colormap=:summer,levels=5)
 
 # ╔═╡ 5ea03814-2c7f-4a4f-94e8-f32b2b322e63
 scalarplot!(vis3,grid,tsol3(t3),show=true)
 
 # ╔═╡ cfef3b64-1473-4cfb-84f1-ba2e3eb23eec
 minplot(tsol3)
+
+# ╔═╡ 450a3c5f-93d9-43d6-9358-e05c5de4f76e
+md"""
+Once again, we see the positivity of the flux
+"""
 
 # ╔═╡ e1c83f34-6c42-49ba-b803-56ec9f069060
 md"""
@@ -243,6 +296,11 @@ md"""
 
 # ╔═╡ e40f4140-9750-446b-9f9f-12f7b05b9754
 xsqrt(x)= x<0 ? 0 : sqrt(x+1.0e-20)
+
+# ╔═╡ 5c2d4fd2-1de8-4727-9a78-c3325d6565c7
+md"""
+Here, we use the same splitting ``\Lambda u = \sqrt(u)\Lambda\sqrt(u)`` as in the last scheme in the stationary case. In the stationary case, this has the best convergence rate of the upwinded schemes handling anisitropy. Here, we check it for nonnegativity.
+"""
 
 # ╔═╡ a42a8dfe-9bec-4fcd-8ba0-6b64f67add88
 function diffusion_step4(f,u,uold,sys,Δt)
@@ -292,13 +350,18 @@ tsol4=evolve(sys4,map(finitebell,grid);tend,nsteps=20);
 @bind t4 Slider(0:0.01:tend,show_value=true)
 
 # ╔═╡ 54afbd40-6ad0-4071-9abf-c5c1443f6e25
-vis4=GridVisualizer(dim=2,size=(300,300),colormap=:summer,levels=-0.1:0.1:1)
+vis4=GridVisualizer(dim=2,size=(300,300))
 
 # ╔═╡ da0a0807-39f3-4dec-9756-18ced2aad16d
-scalarplot!(vis4,grid,tsol4(t4),show=true)
+scalarplot!(vis4,grid,tsol4(t4),show=true,colormap=:summer,levels=5)
 
 # ╔═╡ 4a77b190-8d6b-4204-a8ab-1e3f7f66769e
 minplot(tsol4)
+
+# ╔═╡ 351923d7-da16-49d9-9b8a-e58e53dce044
+md"""
+As we see, this scheme delivers a nonnegative solution.
+"""
 
 # ╔═╡ Cell order:
 # ╠═60941eaa-1aea-11eb-1277-97b991548781
@@ -306,21 +369,27 @@ minplot(tsol4)
 # ╠═7bda3f49-2d03-4e81-ac8a-b4f80db0ef5d
 # ╟─411fa012-fed8-4aec-ad64-544753b75f95
 # ╠═80f88818-a342-4f5d-8a0e-1be36363a268
+# ╟─ee3fa050-a2f5-4b53-97b2-0fd9c95b8935
 # ╠═329f3e2d-0105-482c-997a-79a69a7980f1
+# ╟─2c380b32-d3b4-415c-9e81-4d105391ea27
 # ╠═960f5bce-4a24-419d-8e2e-ec3c89861feb
 # ╠═0b5709b9-3876-4967-b3f7-111f4ec1b31b
 # ╟─944e6bc5-6192-468e-b702-66e9da054a3b
+# ╟─d03f3d5d-70d6-4cd0-8fa5-735844b2d454
 # ╠═2938b43a-aefd-402c-beb4-17cfe8b6c870
 # ╠═639724fa-a638-4cfd-a632-497ac8a901cf
 # ╠═aef21e27-4964-45f3-b215-972599114763
 # ╠═00a4869f-57cb-4772-a741-d8016eb471d2
 # ╠═9f1da51b-7076-4043-8906-276c1ad76fa5
+# ╟─b7ae126b-651d-4a25-8096-be96b16a6f0e
 # ╠═4855ce18-5c8d-419c-9e8a-942e26ab7250
 # ╠═3034215b-e069-4421-942a-f572785b56fd
 # ╠═3869679c-2011-404b-bec4-725afb76443b
 # ╠═8d4c1451-160a-4932-ab0b-1cd49e086c7e
 # ╠═c9c9a576-4713-42d4-b654-23f827696031
+# ╟─c340af0e-8a29-4fc8-81c9-d0451367250a
 # ╟─b03775f9-d149-455a-a7a3-99acc46c8db7
+# ╟─b219629b-9c97-4598-8848-3809854d0752
 # ╠═de9145dd-9747-40a0-b00e-9f2c94286a2e
 # ╠═7795f2b5-1609-4950-a269-a50608b82496
 # ╠═aece7bbb-4944-48cd-b8e4-aaf207f68067
@@ -329,7 +398,9 @@ minplot(tsol4)
 # ╠═6f508fc6-9801-4340-89f9-3ee12e6c1e05
 # ╠═1b91cad4-0abb-4ae5-bd78-dc05b38d6c04
 # ╠═b977e12b-b709-4602-82b4-1b3103acbc75
+# ╟─1b57391b-6abb-4c8e-b7fe-c83b7859c272
 # ╟─9f4321f5-302d-4236-82ae-95e0937e11ac
+# ╟─d58ff61e-44a9-4906-8808-29dae7090ea0
 # ╠═29bbf6c4-ad4e-4024-808e-2cf2344533af
 # ╠═1c4a3d38-2adb-4b5a-b5f5-a944fb1da93a
 # ╠═e3aabc6f-f279-4ff1-ad49-bd2e0066f188
@@ -337,8 +408,10 @@ minplot(tsol4)
 # ╠═790c47a7-650e-4ced-a056-a96a37f30993
 # ╠═5ea03814-2c7f-4a4f-94e8-f32b2b322e63
 # ╠═cfef3b64-1473-4cfb-84f1-ba2e3eb23eec
+# ╟─450a3c5f-93d9-43d6-9358-e05c5de4f76e
 # ╟─e1c83f34-6c42-49ba-b803-56ec9f069060
 # ╠═e40f4140-9750-446b-9f9f-12f7b05b9754
+# ╟─5c2d4fd2-1de8-4727-9a78-c3325d6565c7
 # ╠═a42a8dfe-9bec-4fcd-8ba0-6b64f67add88
 # ╠═34281644-f132-4b63-91aa-1a67d2487213
 # ╠═081d5177-df1e-4530-ab11-db9940126717
@@ -346,3 +419,4 @@ minplot(tsol4)
 # ╠═54afbd40-6ad0-4071-9abf-c5c1443f6e25
 # ╠═da0a0807-39f3-4dec-9756-18ced2aad16d
 # ╠═4a77b190-8d6b-4204-a8ab-1e3f7f66769e
+# ╟─351923d7-da16-49d9-9b8a-e58e53dce044
