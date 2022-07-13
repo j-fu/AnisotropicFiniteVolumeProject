@@ -17,6 +17,7 @@ end
 # ╔═╡ 60941eaa-1aea-11eb-1277-97b991548781
 begin 
 	using Pkg
+        ENV["LC_NUMERIC"]="C"
 	Pkg.activate(joinpath(@__DIR__,".."))
 	using AnisotropicFiniteVolumeProject
     using Revise

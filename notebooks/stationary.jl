@@ -6,10 +6,11 @@ using InteractiveUtils
 
 # ╔═╡ 60941eaa-1aea-11eb-1277-97b991548781
 begin 
-	using Pkg
-	Pkg.activate(joinpath(@__DIR__,".."))
+    using Pkg
+    ENV["LC_NUMERIC"]="C"
+    Pkg.activate(joinpath(@__DIR__,".."))
     using Revise
-	using AnisotropicFiniteVolumeProject
+    using AnisotropicFiniteVolumeProject
     using Polynomials
 	
     using PlutoUI
