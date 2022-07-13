@@ -87,7 +87,7 @@ Create a triangular grid from structured grid;
 rgrid=rsquare(;h)
 
 # ╔═╡ 0b5709b9-3876-4967-b3f7-111f4ec1b31b
-Λ=ΛMatrix(10,π/6)
+Λ=ΛMatrix(100,π/6)
 
 # ╔═╡ 944e6bc5-6192-468e-b702-66e9da054a3b
 md"""
@@ -151,6 +151,9 @@ vis=GridVisualizer(dim=2,size=(300,300),colormap=:summer,levels=5)
 
 # ╔═╡ 3869679c-2011-404b-bec4-725afb76443b
 scalarplot!(vis,grid,tsol(t),show=true)
+
+# ╔═╡ 0e06aa3a-9a5b-4744-b3eb-22df1492c9a8
+minimum(tsol)
 
 # ╔═╡ c9c9a576-4713-42d4-b654-23f827696031
 function minplot(tsol)
@@ -225,6 +228,9 @@ scalarplot!(vis2,grid,tsol2(t2),show=true)
 # ╔═╡ b977e12b-b709-4602-82b4-1b3103acbc75
 minplot(tsol2)
 
+# ╔═╡ cdc0c1e1-a72d-4047-8a9d-04ad1c984d39
+minimum(tsol2)
+
 # ╔═╡ 1b57391b-6abb-4c8e-b7fe-c83b7859c272
 md"""
 As we see, the solution stays positive.
@@ -283,6 +289,9 @@ scalarplot!(vis3,grid,tsol3(t3),show=true)
 
 # ╔═╡ cfef3b64-1473-4cfb-84f1-ba2e3eb23eec
 minplot(tsol3)
+
+# ╔═╡ 8a510441-81cc-4c41-8f21-2adda9fec5f1
+minimum(tsol3)
 
 # ╔═╡ 450a3c5f-93d9-43d6-9358-e05c5de4f76e
 md"""
@@ -358,10 +367,86 @@ scalarplot!(vis4,grid,tsol4(t4),show=true,colormap=:summer,levels=5)
 # ╔═╡ 4a77b190-8d6b-4204-a8ab-1e3f7f66769e
 minplot(tsol4)
 
+# ╔═╡ 4e5095a4-bef1-4d7b-b843-63b3bc956e99
+minimum(tsol4)
+
 # ╔═╡ 351923d7-da16-49d9-9b8a-e58e53dce044
 md"""
 As we see, this scheme delivers a nonnegative solution.
 """
+
+# ╔═╡ 5b2af241-9d66-4b4f-841a-141c420958b1
+md"""
+## Scheme 5
+
+This corresponds to the scheme in the paper of Quenjel
+"""
+
+# ╔═╡ 115c9d1e-fbd7-4c00-a23b-53106ea115f8
+function diffusion_step5(f,u,uold,sys,Δt)
+	tris::Matrix{Int64}=sys.grid[CellNodes]
+	coord::Matrix{Float64}=sys.grid[Coordinates]
+	ntri=size(tris,2)
+	en=[2 3 ; 3 1 ; 1 2 ]'
+	fill!(f,0.0)
+	ϕij=ones(eltype(u),3)
+	ϕi=ones(eltype(u),3)
+    for itri=1:ntri
+		for inode=1:3
+			k=tris[inode,itri]
+			ϕi[inode]=xsqrt(u[k])
+		end
+		for iedge=1:3
+			i=en[1,iedge]		
+			j=en[2,iedge]
+			ϕij[iedge]=0.5*(ϕi[i]+ϕi[j])		
+		end
+        ω,a=baryfactorsx(itri,Λ,coord,tris)
+		for iedge=1:3
+			kl=iedge
+			i=en[1,iedge]		
+			j=en[2,iedge]
+			k=tris[i,itri]		
+			l=tris[j,itri]
+			Fkl=0.0
+			for jedge=1:3
+				ii=tris[en[1,jedge],itri]
+				iτ=tris[en[2,jedge],itri]
+			    Fkl+=a[kl,jedge]*ϕij[jedge]*(xlog(u[ii])-xlog(u[iτ]))
+			end			
+			ukl=Fkl>0  ? ϕi[i] : ϕi[j]
+			du=ukl*Fkl
+			f[k]+=du
+			f[l]-=du
+		end
+		
+	for inode=1:3
+			k=tris[inode,itri]
+			f[k]+=ω[inode]*(u[k]-uold[k])/Δt
+		end
+	end
+end
+
+# ╔═╡ 89f6a669-16ec-4ac8-9f89-bfa322523fe4
+sys5=EvolutionSystem(grid,diffusion_step5;jac=stdsparse(grid),Λ);
+
+# ╔═╡ 7229f21e-8b92-4e8e-a67f-4c8c9c2c0aa7
+tsol5=evolve(sys5,map(finitebell,grid);tend,nsteps=20);
+
+# ╔═╡ 4a9d88c9-4492-401e-bf5f-43e24874cc19
+@bind t5 Slider(0:0.01:tend,show_value=true)
+
+# ╔═╡ 95ed710f-b0b2-43fc-ab96-232166846972
+vis5=GridVisualizer(dim=2,size=(300,300))
+
+# ╔═╡ 7702b595-bf66-4913-a584-cab5c77ebaa4
+scalarplot!(vis5,grid,tsol5(t5),show=true,colormap=:summer,levels=5)
+
+# ╔═╡ 454ee521-6581-425d-81b3-8d0a116f2e87
+minplot(tsol5)
+
+# ╔═╡ 01234ee8-c6c0-45c9-9bab-d306940308d8
+minimum(tsol5)
 
 # ╔═╡ Cell order:
 # ╠═60941eaa-1aea-11eb-1277-97b991548781
@@ -386,6 +471,7 @@ As we see, this scheme delivers a nonnegative solution.
 # ╠═3034215b-e069-4421-942a-f572785b56fd
 # ╠═3869679c-2011-404b-bec4-725afb76443b
 # ╠═8d4c1451-160a-4932-ab0b-1cd49e086c7e
+# ╠═0e06aa3a-9a5b-4744-b3eb-22df1492c9a8
 # ╠═c9c9a576-4713-42d4-b654-23f827696031
 # ╟─c340af0e-8a29-4fc8-81c9-d0451367250a
 # ╟─b03775f9-d149-455a-a7a3-99acc46c8db7
@@ -398,6 +484,7 @@ As we see, this scheme delivers a nonnegative solution.
 # ╠═6f508fc6-9801-4340-89f9-3ee12e6c1e05
 # ╠═1b91cad4-0abb-4ae5-bd78-dc05b38d6c04
 # ╠═b977e12b-b709-4602-82b4-1b3103acbc75
+# ╠═cdc0c1e1-a72d-4047-8a9d-04ad1c984d39
 # ╟─1b57391b-6abb-4c8e-b7fe-c83b7859c272
 # ╟─9f4321f5-302d-4236-82ae-95e0937e11ac
 # ╟─d58ff61e-44a9-4906-8808-29dae7090ea0
@@ -408,6 +495,7 @@ As we see, this scheme delivers a nonnegative solution.
 # ╠═790c47a7-650e-4ced-a056-a96a37f30993
 # ╠═5ea03814-2c7f-4a4f-94e8-f32b2b322e63
 # ╠═cfef3b64-1473-4cfb-84f1-ba2e3eb23eec
+# ╠═8a510441-81cc-4c41-8f21-2adda9fec5f1
 # ╟─450a3c5f-93d9-43d6-9358-e05c5de4f76e
 # ╟─e1c83f34-6c42-49ba-b803-56ec9f069060
 # ╠═e40f4140-9750-446b-9f9f-12f7b05b9754
@@ -419,4 +507,14 @@ As we see, this scheme delivers a nonnegative solution.
 # ╠═54afbd40-6ad0-4071-9abf-c5c1443f6e25
 # ╠═da0a0807-39f3-4dec-9756-18ced2aad16d
 # ╠═4a77b190-8d6b-4204-a8ab-1e3f7f66769e
+# ╠═4e5095a4-bef1-4d7b-b843-63b3bc956e99
 # ╟─351923d7-da16-49d9-9b8a-e58e53dce044
+# ╟─5b2af241-9d66-4b4f-841a-141c420958b1
+# ╠═115c9d1e-fbd7-4c00-a23b-53106ea115f8
+# ╠═89f6a669-16ec-4ac8-9f89-bfa322523fe4
+# ╠═7229f21e-8b92-4e8e-a67f-4c8c9c2c0aa7
+# ╠═4a9d88c9-4492-401e-bf5f-43e24874cc19
+# ╠═95ed710f-b0b2-43fc-ab96-232166846972
+# ╠═7702b595-bf66-4913-a584-cab5c77ebaa4
+# ╠═454ee521-6581-425d-81b3-8d0a116f2e87
+# ╠═01234ee8-c6c0-45c9-9bab-d306940308d8

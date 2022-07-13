@@ -20,7 +20,7 @@ export fenorms, fem_assemble!, fem_solve
 
 
 include("afvmlib.jl")
-export femfactors, baryfactors, circumfactors, afvm_solve
+export femfactors, baryfactors, baryfactorsx, circumfactors, afvm_solve
 
 include("evolution.jl")
 export EvolutionSystem,evolve,stdsparse,statsolve

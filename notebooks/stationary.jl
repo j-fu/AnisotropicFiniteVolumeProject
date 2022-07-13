@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.4
+# v0.19.9
 
 using Markdown
 using InteractiveUtils
@@ -486,6 +486,83 @@ l2(case,norms)=[norms[case][i][1] for i=1:length(norms[case])]
 # ╔═╡ fac87491-af52-4fbd-98b4-b0480a26da20
 h1(case,norms)=[norms[case][i][2] for i=1:length(norms[case])]
 
+# ╔═╡ b1197bd4-67b6-4b04-9bb2-6d6180406833
+md"""
+### Real Quenjel
+
+This uses a discretization corresponding to the scheme described
+in the Quenjel paper. The coefficients `a` correspond to ``a^T_{i,KL}`` in the paper (defined on p.599, after (3.5))
+"""
+
+# ╔═╡ 1a66778f-6d73-46c1-999a-0ff55c6ff592
+function BaryFVMTest5(grid,Λ)
+
+function diffusion5(f,u,uold,sys,Δt)
+	tris::Matrix{Int64}=sys.grid[CellNodes]
+	coord::Matrix{Float64}=sys.grid[Coordinates]
+	ntri=size(tris,2)
+	en=[2 3 ; 3 1 ; 1 2 ]'
+	fill!(f,0.0)
+	#xlog(u)=u
+	#xsqrt(u)=u
+	ϕij=ones(eltype(u),3)
+	ϕi=ones(eltype(u),3)
+	for itri=1:ntri
+     	for inode=1:3
+			k=tris[inode,itri]
+			ϕi[inode]=xsqrt(u[k])
+			#ϕi[inode]=1
+		end
+		for iedge=1:3
+			i=en[1,iedge]		
+			j=en[2,iedge]
+			k=tris[i,itri]		
+			l=tris[j,itri]
+			ϕij[iedge]=xsqrt(0.5*(u[k]+u[l]))
+			#ϕij[iedge]=0.5*(ϕi[i]+ϕi[j])
+			#ϕij[iedge]=1
+		end
+		ω,a=baryfactorsx(itri,Λ,coord,tris)
+		for iedge=1:3
+			kl=iedge
+			i=en[1,iedge]		
+			j=en[2,iedge]
+			k=tris[i,itri]		
+			l=tris[j,itri]
+			Fkl=0.0
+			for jedge=1:3
+				ii=tris[en[1,jedge],itri]
+				iτ=tris[en[2,jedge],itri]
+			    Fkl+=a[kl,jedge]*ϕij[jedge]*(xlog(u[ii])-xlog(u[iτ]))
+			end
+			
+			ukl=Fkl>0  ? ϕi[i] : ϕi[j]
+			du=ukl*Fkl
+			f[k]+=du
+			f[l]-=du
+		end
+		
+	for inode=1:3
+			k=tris[inode,itri]
+			f[k]+=ω[inode]*∇Λ∇(finitebell,coord[:,k],Λ)
+		end
+	end
+     homogeneous_dirichlet(f,u,sys.grid)	
+end	
+	
+	sys=EvolutionSystem(grid,diffusion5;jac=stdsparse(grid),Λ=Λ);
+	
+	statsolve(sys,map(finitebellx,grid))
+	
+end
+
+
+# ╔═╡ 8bad8c5d-4772-4380-876d-6033213e6d1e
+fourtests(BaryFVMTest5,"baryfvm5.png")
+
+# ╔═╡ 0f0ed6e1-99db-4495-857d-37727bb38172
+BaryFVMNorms5=fourconv(BaryFVMTest5;maxlev)
+
 # ╔═╡ 18c38fb8-e285-4ed8-a7d9-144cb4e9ab53
 function plotnorms(nrm; addplot=()->())
 	clf()
@@ -499,6 +576,7 @@ function plotnorms(nrm; addplot=()->())
 	loglog(H,nrm(case,BaryFVMNorms2),"o-",label="Bary2")
 	loglog(H,nrm(case,BaryFVMNorms3),label="Bary3")
 	loglog(H,nrm(case,BaryFVMNorms4),label="Bary4")
+	loglog(H,nrm(case,BaryFVMNorms5),"o-",label="Bary5")
     addplot()
     legend(loc="lower right")
 	end
@@ -614,6 +692,10 @@ html"<hr>"
 # ╠═8c48a02f-fdc0-473e-8cc2-bf47fdd120c9
 # ╠═c651e025-eb3f-4e80-9aac-2265ffa52439
 # ╠═fac87491-af52-4fbd-98b4-b0480a26da20
+# ╟─b1197bd4-67b6-4b04-9bb2-6d6180406833
+# ╠═1a66778f-6d73-46c1-999a-0ff55c6ff592
+# ╠═8bad8c5d-4772-4380-876d-6033213e6d1e
+# ╠═0f0ed6e1-99db-4495-857d-37727bb38172
 # ╠═18c38fb8-e285-4ed8-a7d9-144cb4e9ab53
 # ╠═8d520cbd-08e3-41e9-93fd-4187e7b91153
 # ╠═c823d4ac-9d79-40ba-8203-6a96de0727cc

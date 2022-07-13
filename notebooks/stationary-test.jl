@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.4
+# v0.19.9
 
 using Markdown
 using InteractiveUtils
@@ -8,8 +8,8 @@ using InteractiveUtils
 begin 
 	using Pkg
 	Pkg.activate(joinpath(@__DIR__,".."))
-	using AnisotropicFiniteVolumeProject
     using Revise
+ 	using AnisotropicFiniteVolumeProject
     using Polynomials
 	
     using PlutoUI
@@ -104,7 +104,7 @@ scalarplot(g2,sol2[1,:],size=(300,300))
 α=π/4;
 
 # ╔═╡ 35a97451-04c8-4759-b60d-3fcb77de3d45
-Λ11=1000;
+Λ11=1;
 
 # ╔═╡ dbdea373-a6af-4a4b-a682-db79589778ec
 D=ΛMatrix(Λ11,α)
@@ -118,7 +118,7 @@ function dflux(y,u,edge)
 end
 
 # ╔═╡ 055bd291-f390-464e-910c-f3fe2196cb7e
-DX=range(-1.1,1.1,length=100)
+DX=range(-1.1,1.1,length=5)
 
 # ╔═╡ 12b79e34-23a4-41b5-8907-0f7e69687037
 dgrid2=simplexgrid(DX,DX)

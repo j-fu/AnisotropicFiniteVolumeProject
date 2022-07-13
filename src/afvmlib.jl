@@ -1,3 +1,9 @@
+"""
+    femfactors!(ω,e,itri, Λ,coord, pointlist)
+
+Calculate mass matrix diagonal ω and upper triangular part of stiffness matrix 
+corrasponding to  ∫ Λ ∇ λ_i ∇λ_j where Λ is a d x d matrix.
+"""
 function femfactors!(ω,e,itri, Λ,coord, pointlist)
     G,vol=femgrad(itri,coord,pointlist)
     e[1]=-dot(G[2,:],Λ*G[3,:])*vol
@@ -48,31 +54,44 @@ function genfactors!(ω,e,itri,Λ, coord, pointlist;bary=false)
     Γ31=norm(center-ec31)
     h12=norm(e12)
     Γ12=norm(center-ec12)
+
+    en=[2 3 ; 3 1 ; 1 2 ]'
     
+    nn=(nn23,nn12,nn31)
     
-    β=@MMatrix zeros(3,3)
-    β[1,1]=Γ12*Γ12*dot(Λ*nn12,nn12)
-    β[1,2]=Γ12*Γ23*dot(Λ*nn12,nn23)
-    β[1,3]=Γ12*Γ31*dot(Λ*nn12,nn31)
-    β[2,1]=Γ23*Γ12*dot(Λ*nn23,nn12)
-    β[2,2]=Γ23*Γ23*dot(Λ*nn23,nn23)
-    β[2,3]=Γ23*Γ31*dot(Λ*nn23,nn31)
-    β[3,1]=Γ31*Γ12*dot(Λ*nn31,nn12)
-    β[3,2]=Γ31*Γ23*dot(Λ*nn31,nn23)
-    β[3,3]=Γ31*Γ31*dot(Λ*nn31,nn31)
-    
+    # This is Quenjels A-Matrix
+    a=@MMatrix [ dot(Λ*nn[i],nn[j])/vol for i=1:3, j=1:3]
+ 
+
     
     # Frolkovic's lambda values are projections of the diffusion tensor
-#    λ12= h12*dot(Λ*(nn12-nn31),G[2,:])/Γ12
-#    λ23= h23*dot(Λ*(nn23-nn12),G[3,:])/Γ23
-#    λ31= h31*dot(Λ*(nn31-nn23),G[1,:])/Γ31
-#    λ23,λ31,λ12	
-    
-    # Lambda values as form factors	
+    #    λ12= h12*dot(Λ*(nn12-nn31),G[2,:])/Γ12
+    #    λ23= h23*dot(Λ*(nn23-nn12),G[3,:])/Γ23
+    #    λ31= h31*dot(Λ*(nn31-nn23),G[1,:])/Γ31
+    #    λ23,λ31,λ12	
+    # Lambda values as form factors	 CHECKED
     λ12= -dot(Λ*(nn12-nn31),G[2,:])
     λ23= -dot(Λ*(nn23-nn12),G[3,:])
     λ31= -dot(Λ*(nn31-nn23),G[1,:])
+
+    # Ths is corresponds to  Quenjel (2.3): e.g. -nn12-nn31 = vol*\nabla \lambda1
+    # CHECKED
+    λ12= -dot(Λ*(nn12-nn31),nn23-nn12)/vol
+    λ23= -dot(Λ*(nn23-nn12),nn31-nn23)/vol
+    λ31= -dot(Λ*(nn31-nn23),nn12-nn31)/vol
+
+
+
     e.=(λ23,λ31,λ12)	
+
+
+    # ll=[ 0    λ12 λ31
+    #      λ12   0  λ23
+    #      λ31  λ23 0]
+    
+
+    #@info Matrix(β), ll
+    
     
     if bary
     	ω[1]=ω[2]=ω[3]=vol/3
@@ -81,11 +100,60 @@ function genfactors!(ω,e,itri,Λ, coord, pointlist;bary=false)
 	ω[2]=(h23*Γ23 + h12*Γ12)/4		
 	ω[3]=(h31*Γ31 + h23*Γ23)/4
     end
-    ω,e,β
+    ω,e,a
     
 end
 
+
+
+
 baryfactors(itri, Λ,coord, pointlist)=genfactors!(MVector{3,Float64}(0,0,0),MVector{3,Float64}(0,0,0),itri,Λ,coord,pointlist;bary=true)
+
+
+
+
+function baryfactorsx(itri, Λ,coord, pointlist)
+    C=@MMatrix zeros(3,3)
+    coordmatrix!(C,coord,pointlist,itri)
+    vol=abs(det(C))/2
+
+    i1=pointlist[1,itri]		
+    i2=pointlist[2,itri]		
+    i3=pointlist[3,itri]	
+    
+    @views center=@SVector [sum(coord[1,pointlist[:,itri]])/3,sum(coord[2,pointlist[:,itri]])/3]
+    
+    @views ec23=@SVector [ (coord[1,i2]+coord[1,i3])/2, (coord[2,i2]+coord[2,i3])/2 ]
+    @views e23=coord[:,i2]-coord[:,i3]
+    g=(center-ec23)
+    nn23=@SVector [g[2],-g[1]]
+    nn23*=sign(dot(e23,nn23))
+    
+    @views ec31=@SVector [(coord[1,i1]+coord[1,i3])/2, (coord[2,i1]+coord[2,i3])/2 ]
+    @views e31=coord[:,i3]-coord[:,i1]
+    g=(center-ec31)
+    nn31=@SVector [g[2],-g[1]]
+    nn31*=sign(dot(e31,nn31))
+    
+    @views ec12=@SVector [(coord[1,i1]+coord[1,i2])/2, (coord[2,i1]+coord[2,i2])/2 ]
+    @views e12=coord[:,i1]-coord[:,i2]
+    g=(center-ec12)
+    nn12=@SVector [g[2],-g[1]]
+    nn12*=sign(dot(e12,nn12))
+    
+    
+    nn=(nn23,nn31,nn12)
+    
+    # This is Quenjels A-Matrix
+    a=@SMatrix [ dot(Λ*nn[i],nn[j])/vol for i=1:3, j=1:3]
+    
+    ω=(vol/3,vol/3,vol/3)
+    ω,a
+    
+end
+
+
+
 
 circumfactors(itri, Λ,coord, pointlist)=genfactors!(MVector{3,Float64}(0,0,0),MVector{3,Float64}(0,0,0),itri,Λ,coord,pointlist;bary=false)
 
@@ -95,19 +163,30 @@ function baryfactors(itri, ϕ, Λ,coord, pointlist)
 
     ω=MVector{3,Float64}(0,0,0)
     e=MVector{3,T}(0,0,0)
-    
+
+    # Gradients of P1 Ansatz functions
     G,vol=femgrad(itri,coord,pointlist)	
     
     i1=pointlist[1,itri]		
     i2=pointlist[2,itri]		
     i3=pointlist[3,itri]	
 
+    # barycenter of triangle
     center=@SVector [sum(coord[1,pointlist[:,itri]])/3,sum(coord[2,pointlist[:,itri]])/3]
 
+    # Edge center
     ec23=@SVector [ (coord[1,i2]+coord[1,i3])/2, (coord[2,i2]+coord[2,i3])/2 ]
+
+    # Edge vector
     e23=coord[:,i2]-coord[:,i3]
+
+    # line from barycenter to edge center
     g=(center-ec23)
+
+    # normal to line from barycenter to edge center multiplied by the length of that line
     nn23=@SVector [g[2],-g[1]]
+
+    # fix normal direction, multiply edge Φ
     nn23*=sign(dot(e23,nn23))*ϕ[1]
     
     ec31=@SVector [(coord[1,i1]+coord[1,i3])/2, (coord[2,i1]+coord[2,i3])/2 ]
@@ -122,6 +201,7 @@ function baryfactors(itri, ϕ, Λ,coord, pointlist)
     nn12=@SVector [g[2],-g[1]]
     nn12*=sign(dot(e12,nn12))*ϕ[3]
     
+#=    
     h23=norm(e23)
     Γ23=norm(center-ec23)
     h31=norm(e31)
@@ -129,7 +209,6 @@ function baryfactors(itri, ϕ, Λ,coord, pointlist)
     h12=norm(e12)
     Γ12=norm(center-ec12)
     
-#=    
     β=@MMatrix zeros(3,3)
     β[1,1]=Γ12*Γ12*dot(Λ*nn12,nn12)
     β[1,2]=Γ12*Γ23*dot(Λ*nn12,nn23)
@@ -151,7 +230,7 @@ function baryfactors(itri, ϕ, Λ,coord, pointlist)
     # Lambda values as form factors	
     λ12= -dot(Λ*(nn12-nn31),G[2,:])
     λ23= -dot(Λ*(nn23-nn12),G[3,:])
-    λ31=-dot(Λ*(nn31-nn23),G[1,:])
+    λ31= -dot(Λ*(nn31-nn23),G[1,:])
     e.=(λ23,λ31,λ12)	
     
     ω[1]=ω[2]=ω[3]=vol/3

@@ -5,10 +5,13 @@ struct EvolutionSystem{Op}
     grid::ExtendableGrid
     jac::SparseMatrixCSC{Float64, Int64}
     colors::Vector{Int}
+    e::Matrix{Float64}
+    ω::Matrix{Float64}
 end
 ```
 
-Evolution system structure
+Evolution system structure.
+This contains the Λ weighted form factors.
 
 Defined in $(joinpath("src",basename(@__FILE__)))
 """
@@ -22,7 +25,7 @@ struct EvolutionSystem{Op}
 end
 
 """
-    EvolutionSystem(grid,implicit_tstep; jac=nothing)
+    EvolutionSystem(grid,implicit_tstep; jac=nothing,  Λ=[1 0 ; 0 1])
 
 Create evolution system on grid.
 The signature of the callback is
