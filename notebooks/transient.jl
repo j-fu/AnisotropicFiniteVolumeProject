@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.9
+# v0.18.1
 
 using Markdown
 using InteractiveUtils
@@ -22,9 +22,11 @@ begin
 	using AnisotropicFiniteVolumeProject
     using Revise
     using PlutoUI
+	using PyPlot
     EL=PlutoUI.ExperimentalLayout
 	using GridVisualize
 	using ExtendableGrids
+	using DrWatson
 	using SimplexGridFactory,Triangulate
 	import PlutoVista
 	default_plotter!(PlutoVista)
@@ -63,13 +65,36 @@ function rsquare(;h=0.1)
 	simplexgrid(X,X)
 end
 
+# ╔═╡ ea1e02a5-e4a7-445e-aa5c-4cc2dd0b51a4
+plottimes=[0.1,0.3,0.6,1.0]
+
+# ╔═╡ 32cec990-461a-45f1-8e34-b3f0b9451d6d
+function mysave(fname,v)
+    GridVisualize.save(plotsdir(fname),v)
+	@info """saved to $(plotsdir(fname))"""
+end
+
+# ╔═╡ c825f9d6-e040-4a5e-87de-4de3282e7023
+function fourplots(grid,tsol; fname="test.png", times=plottimes)
+	vis=GridVisualizer(layout=(2,2),resolution=(700,600),Plotter=PyPlot)
+	myplot(i,j,t)=
+	scalarplot!(vis[i,j],grid,tsol(t),colormap=:summer,levels=5, title="t=$t")	
+	myplot(1,1,times[1])
+	myplot(1,2,times[2])
+	myplot(2,1,times[3])
+	myplot(2,2,times[4])
+		
+	mysave(fname,vis)
+	reveal(vis)
+end
+
 # ╔═╡ 411fa012-fed8-4aec-ad64-544753b75f95
 md"""
 ## Parameters
 """
 
 # ╔═╡ 80f88818-a342-4f5d-8a0e-1be36363a268
-h=0.5
+h=0.3
 
 # ╔═╡ ee3fa050-a2f5-4b53-97b2-0fd9c95b8935
 md"""
@@ -89,6 +114,12 @@ rgrid=rsquare(;h)
 
 # ╔═╡ 0b5709b9-3876-4967-b3f7-111f4ec1b31b
 Λ=ΛMatrix(100,π/6)
+
+# ╔═╡ c9c9a576-4713-42d4-b654-23f827696031
+function minplot(tsol)
+	mins=[minimum(tsol[i]) for i=1:length(tsol.t)]
+	scalarplot(tsol.t,mins,size=(600,200))
+end
 
 # ╔═╡ 944e6bc5-6192-468e-b702-66e9da054a3b
 md"""
@@ -153,17 +184,14 @@ vis=GridVisualizer(dim=2,size=(300,300),colormap=:summer,levels=5)
 # ╔═╡ 3869679c-2011-404b-bec4-725afb76443b
 scalarplot!(vis,grid,tsol(t),show=true)
 
+# ╔═╡ 8d4c1451-160a-4932-ab0b-1cd49e086c7e
+minplot(tsol)
+
 # ╔═╡ 0e06aa3a-9a5b-4744-b3eb-22df1492c9a8
 minimum(tsol)
 
-# ╔═╡ c9c9a576-4713-42d4-b654-23f827696031
-function minplot(tsol)
-	mins=[minimum(tsol[i]) for i=1:length(tsol.t)]
-	scalarplot(tsol.t,mins,size=(600,200))
-end
-
-# ╔═╡ 8d4c1451-160a-4932-ab0b-1cd49e086c7e
-minplot(tsol)
+# ╔═╡ b2fc28d2-7dd7-4246-b969-4bf9fe7e0df9
+fourplots(grid,tsol,fname="transient1.png")
 
 # ╔═╡ c340af0e-8a29-4fc8-81c9-d0451367250a
 md"""
@@ -237,6 +265,9 @@ md"""
 As we see, the solution stays positive.
 """
 
+# ╔═╡ b48b4d86-7a17-45a5-8153-de58e86c21c8
+fourplots(grid,tsol2,fname="transient2.png")
+
 # ╔═╡ 9f4321f5-302d-4236-82ae-95e0937e11ac
 md"""
 ## Scheme 3
@@ -294,6 +325,9 @@ minplot(tsol3)
 # ╔═╡ 8a510441-81cc-4c41-8f21-2adda9fec5f1
 minimum(tsol3)
 
+# ╔═╡ 256bf385-5cdf-437f-b41b-91b4ddc54925
+fourplots(grid,tsol3,fname="transient3.png")
+
 # ╔═╡ 450a3c5f-93d9-43d6-9358-e05c5de4f76e
 md"""
 Once again, we see the positivity of the flux
@@ -302,6 +336,7 @@ Once again, we see the positivity of the flux
 # ╔═╡ e1c83f34-6c42-49ba-b803-56ec9f069060
 md"""
 ## Scheme 4
+(incorrect version of Quenjel scheme, we skip this)
 """
 
 # ╔═╡ e40f4140-9750-446b-9f9f-12f7b05b9754
@@ -311,6 +346,9 @@ xsqrt(x)= x<0 ? 0 : sqrt(x+1.0e-20)
 md"""
 Here, we use the same splitting ``\Lambda u = \sqrt(u)\Lambda\sqrt(u)`` as in the last scheme in the stationary case. In the stationary case, this has the best convergence rate of the upwinded schemes handling anisitropy. Here, we check it for nonnegativity.
 """
+
+# ╔═╡ f29e3368-b59f-4e98-ab17-99f98af3bd13
+
 
 # ╔═╡ a42a8dfe-9bec-4fcd-8ba0-6b64f67add88
 function diffusion_step4(f,u,uold,sys,Δt)
@@ -370,6 +408,9 @@ minplot(tsol4)
 
 # ╔═╡ 4e5095a4-bef1-4d7b-b843-63b3bc956e99
 minimum(tsol4)
+
+# ╔═╡ da8fdc58-e534-4a55-9e34-694ece4ecb21
+fourplots(grid,tsol4,fname="transient4.png")
 
 # ╔═╡ 351923d7-da16-49d9-9b8a-e58e53dce044
 md"""
@@ -449,10 +490,16 @@ minplot(tsol5)
 # ╔═╡ 01234ee8-c6c0-45c9-9bab-d306940308d8
 minimum(tsol5)
 
+# ╔═╡ 68106561-3e5a-40db-8516-f3acd4383122
+fourplots(grid,tsol5,fname="transient5.png")
+
 # ╔═╡ Cell order:
 # ╠═60941eaa-1aea-11eb-1277-97b991548781
 # ╠═5a4c1695-28be-428a-9983-f94b3fa38160
 # ╠═7bda3f49-2d03-4e81-ac8a-b4f80db0ef5d
+# ╠═ea1e02a5-e4a7-445e-aa5c-4cc2dd0b51a4
+# ╠═32cec990-461a-45f1-8e34-b3f0b9451d6d
+# ╠═c825f9d6-e040-4a5e-87de-4de3282e7023
 # ╟─411fa012-fed8-4aec-ad64-544753b75f95
 # ╠═80f88818-a342-4f5d-8a0e-1be36363a268
 # ╟─ee3fa050-a2f5-4b53-97b2-0fd9c95b8935
@@ -460,6 +507,7 @@ minimum(tsol5)
 # ╟─2c380b32-d3b4-415c-9e81-4d105391ea27
 # ╠═960f5bce-4a24-419d-8e2e-ec3c89861feb
 # ╠═0b5709b9-3876-4967-b3f7-111f4ec1b31b
+# ╠═c9c9a576-4713-42d4-b654-23f827696031
 # ╟─944e6bc5-6192-468e-b702-66e9da054a3b
 # ╟─d03f3d5d-70d6-4cd0-8fa5-735844b2d454
 # ╠═2938b43a-aefd-402c-beb4-17cfe8b6c870
@@ -473,7 +521,7 @@ minimum(tsol5)
 # ╠═3869679c-2011-404b-bec4-725afb76443b
 # ╠═8d4c1451-160a-4932-ab0b-1cd49e086c7e
 # ╠═0e06aa3a-9a5b-4744-b3eb-22df1492c9a8
-# ╠═c9c9a576-4713-42d4-b654-23f827696031
+# ╠═b2fc28d2-7dd7-4246-b969-4bf9fe7e0df9
 # ╟─c340af0e-8a29-4fc8-81c9-d0451367250a
 # ╟─b03775f9-d149-455a-a7a3-99acc46c8db7
 # ╟─b219629b-9c97-4598-8848-3809854d0752
@@ -487,6 +535,7 @@ minimum(tsol5)
 # ╠═b977e12b-b709-4602-82b4-1b3103acbc75
 # ╠═cdc0c1e1-a72d-4047-8a9d-04ad1c984d39
 # ╟─1b57391b-6abb-4c8e-b7fe-c83b7859c272
+# ╠═b48b4d86-7a17-45a5-8153-de58e86c21c8
 # ╟─9f4321f5-302d-4236-82ae-95e0937e11ac
 # ╟─d58ff61e-44a9-4906-8808-29dae7090ea0
 # ╠═29bbf6c4-ad4e-4024-808e-2cf2344533af
@@ -497,10 +546,12 @@ minimum(tsol5)
 # ╠═5ea03814-2c7f-4a4f-94e8-f32b2b322e63
 # ╠═cfef3b64-1473-4cfb-84f1-ba2e3eb23eec
 # ╠═8a510441-81cc-4c41-8f21-2adda9fec5f1
+# ╠═256bf385-5cdf-437f-b41b-91b4ddc54925
 # ╟─450a3c5f-93d9-43d6-9358-e05c5de4f76e
 # ╟─e1c83f34-6c42-49ba-b803-56ec9f069060
 # ╠═e40f4140-9750-446b-9f9f-12f7b05b9754
 # ╟─5c2d4fd2-1de8-4727-9a78-c3325d6565c7
+# ╠═f29e3368-b59f-4e98-ab17-99f98af3bd13
 # ╠═a42a8dfe-9bec-4fcd-8ba0-6b64f67add88
 # ╠═34281644-f132-4b63-91aa-1a67d2487213
 # ╠═081d5177-df1e-4530-ab11-db9940126717
@@ -509,6 +560,7 @@ minimum(tsol5)
 # ╠═da0a0807-39f3-4dec-9756-18ced2aad16d
 # ╠═4a77b190-8d6b-4204-a8ab-1e3f7f66769e
 # ╠═4e5095a4-bef1-4d7b-b843-63b3bc956e99
+# ╠═da8fdc58-e534-4a55-9e34-694ece4ecb21
 # ╟─351923d7-da16-49d9-9b8a-e58e53dce044
 # ╟─5b2af241-9d66-4b4f-841a-141c420958b1
 # ╠═115c9d1e-fbd7-4c00-a23b-53106ea115f8
@@ -519,3 +571,4 @@ minimum(tsol5)
 # ╠═7702b595-bf66-4913-a584-cab5c77ebaa4
 # ╠═454ee521-6581-425d-81b3-8d0a116f2e87
 # ╠═01234ee8-c6c0-45c9-9bab-d306940308d8
+# ╠═68106561-3e5a-40db-8516-f3acd4383122

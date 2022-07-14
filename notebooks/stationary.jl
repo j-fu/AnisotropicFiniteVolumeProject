@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.9
+# v0.18.1
 
 using Markdown
 using InteractiveUtils
@@ -242,6 +242,7 @@ FEMNorms=fourconv(FEMTest;maxlev)
 # ╔═╡ 97dc31e8-a4e5-4294-b214-da3e53089cc8
 md"""
 ### "Simple" Barycentric finite volumes
+(bary1): this is equivalent to FEM
 """
 
 # ╔═╡ 648a48f0-2af4-4b9e-80f5-1926653c02ee
@@ -253,6 +254,11 @@ finitebellx(x,y)=finitebell(x,y)+0.01*rand()
 # ╔═╡ 7511e717-3ad2-4d3b-8445-b11b5a5bb3fc
 md"""
 ### Nonlinear BaryFVM, simple upwind
+(bary 2)
+Based on the reformulation 
+```math
+-\nabla \Lambda\nabla u = -\nabla \Lambda u \nabla  \log u
+```
 """
 
 # ╔═╡ 038dd7cb-07eb-481c-9459-29afab26c9bb
@@ -411,7 +417,8 @@ BaryFVMNorms3=fourconv(BaryFVMTest3;maxlev)
 
 # ╔═╡ 077b2362-7963-462e-8509-fe1da48d6cdb
 md"""
-### Nonlinear BaryFVM, Quenjel scheme
+### Nonlinear BaryFVM, not really Quenjel scheme
+(Bary4) We can skip this 
 """
 
 # ╔═╡ 32e2907d-ea3a-48cc-8931-901ad15b3c57
@@ -490,7 +497,7 @@ h1(case,norms)=[norms[case][i][2] for i=1:length(norms[case])]
 # ╔═╡ b1197bd4-67b6-4b04-9bb2-6d6180406833
 md"""
 ### Real Quenjel
-
+(bary5)
 This uses a discretization corresponding to the scheme described
 in the Quenjel paper. The coefficients `a` correspond to ``a^T_{i,KL}`` in the paper (defined on p.599, after (3.5))
 """
@@ -519,8 +526,8 @@ function diffusion5(f,u,uold,sys,Δt)
 			j=en[2,iedge]
 			k=tris[i,itri]		
 			l=tris[j,itri]
-			ϕij[iedge]=xsqrt(0.5*(u[k]+u[l]))
-			#ϕij[iedge]=0.5*(ϕi[i]+ϕi[j])
+			#ϕij[iedge]=xsqrt(0.5*(u[k]+u[l]))
+			ϕij[iedge]=0.5*(ϕi[i]+ϕi[j])
 			#ϕij[iedge]=1
 		end
 		ω,a=baryfactorsx(itri,Λ,coord,tris)
@@ -573,11 +580,11 @@ function plotnorms(nrm; addplot=()->())
     PyPlot.grid()
 	loglog(H,nrm(case,VoronoiFVMNorms),"+-",label="Voronoi",markersize=8)
 	loglog(H,nrm(case,FEMNorms),"o-",label="FEM",markersize=5)
-	loglog(H,nrm(case,BaryFVMNorms1),label="Bary1")
-	loglog(H,nrm(case,BaryFVMNorms2),"o-",label="Bary2")
-	loglog(H,nrm(case,BaryFVMNorms3),label="Bary3")
-	loglog(H,nrm(case,BaryFVMNorms4),label="Bary4")
-	loglog(H,nrm(case,BaryFVMNorms5),"o-",label="Bary5")
+	loglog(H,nrm(case,BaryFVMNorms1),label="Simple Bary")
+	loglog(H,nrm(case,BaryFVMNorms2),"o-",label="Upwind")
+#	loglog(H,nrm(case,BaryFVMNorms3),label="Better upw") # we can skip also scheme 3
+#	loglog(H,nrm(case,BaryFVMNorms4),label="Bary4")
+	loglog(H,nrm(case,BaryFVMNorms5),"o-",label="Quenjel")# (bary5)
     addplot()
     legend(loc="lower right")
 	end
