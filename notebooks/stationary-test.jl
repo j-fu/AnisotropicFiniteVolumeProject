@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.9
+# v0.19.41
 
 using Markdown
 using InteractiveUtils
@@ -19,8 +19,8 @@ begin
 	using Tensors
 	using VoronoiFVM
 	using ExtendableGrids
-	import PlutoVista
-	default_plotter!(PlutoVista)
+	import CairoMakie
+	default_plotter!(CairoMakie)
 	using LinearAlgebra
 end
 
@@ -40,8 +40,8 @@ fmytest=map(finitebell,g2)
 dfmytest=map( (x,y)->∇Λ∇(finitebell,[x,y]),g2)
 
 # ╔═╡ 78f7e140-b5e3-4aa8-8396-23c0fcdcc23f
-scalarplot(g2,fmytest,size=(200,200)),
-scalarplot(g2,dfmytest,size=(200,200))
+scalarplot(g2,fmytest,size=(400,400)),
+scalarplot(g2,dfmytest,size=(400,400))
 
 
 # ╔═╡ 2f24a9fc-6065-4d09-a047-79996c9156f8
@@ -53,8 +53,8 @@ dfmytest1=map((x)->∇Λ∇(finitebell,x),g1)
 # ╔═╡ 420455d7-956a-4f2d-98fc-49681d81bb79
 let
 	v=GridVisualizer(;size=(500,200))
-	scalarplot!(v,g1,fmytest1)
-	scalarplot!(v,g1,dfmytest1,clear=false)
+	scalarplot!(v,g1,fmytest1,color=:red)
+	scalarplot!(v,g1,dfmytest1,clear=false, color=:green)
 	reveal(v)
 end
 

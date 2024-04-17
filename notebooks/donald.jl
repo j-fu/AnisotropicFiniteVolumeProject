@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.18.0
+# v0.19.41
 
 using Markdown
 using InteractiveUtils
@@ -20,7 +20,7 @@ begin
     Pkg.activate(joinpath(@__DIR__,".."))
     ENV["LC_NUMERIC"]="C"
 	using Revise
-	using AnisoFV
+	using AnisotropicFiniteVolumeProject
 	using StaticArrays
     using PlutoUI, PyPlot,SimplexGridFactory,ExtendableGrids,ExtendableSparse,GridVisualize,SparseArrays, Printf, HypertextLiteral,PlutoVista,Triangulate
 	using VoronoiFVM
@@ -94,7 +94,7 @@ function vfvmfactors(itri,pts,tris)
 end
 
 # ╔═╡ e8baf009-9546-45fb-8e19-31368a2f347d
-function AnisoFV.femfactors!(ω,e,itri, coord, pointlist)
+function femfactors!(ω,e,itri, coord, pointlist)
 	G,vol=femgrad(itri,coord,pointlist)
 	e[1]=-dot(G[2,:],G[3,:])*vol
 	e[2]=-dot(G[1,:],G[3,:])*vol
@@ -108,7 +108,7 @@ femfactors(itri, coord, pointlist)=femfactors!(MVector{3,Float64}(0,0,0),MVector
 
 # ╔═╡ 5507f5f8-6c2e-4316-9cf5-bebbe806d987
 function genfactors!(ω,e,itri,coord, pointlist;bary=true)
-    G,vol=AnisoFV.femgrad(itri,coord,pointlist)	
+    G,vol=femgrad(itri,coord,pointlist)	
 	
 	i1=pointlist[1,itri]		
 	i2=pointlist[2,itri]		
@@ -180,10 +180,10 @@ end
 end
 
 # ╔═╡ 75a4c248-84cc-4302-bc59-51f09a6e2bb8
-AnisoFV.baryfactors(itri, coord, pointlist)=genfactors!(MVector{3,Float64}(0,0,0),MVector{3,Float64}(0,0,0),itri,coord,pointlist;bary=true)
+baryfactors(itri, coord, pointlist)=genfactors!(MVector{3,Float64}(0,0,0),MVector{3,Float64}(0,0,0),itri,coord,pointlist;bary=true)
 
 # ╔═╡ 4fc48d46-ba39-46e6-bc14-462ec6c7ae62
-AnisoFV.circumfactors(itri, coord, pointlist)=genfactors!(MVector{3,Float64}(0,0,0),MVector{3,Float64}(0,0,0),itri,coord,pointlist;bary=false)
+circumfactors(itri, coord, pointlist)=genfactors!(MVector{3,Float64}(0,0,0),MVector{3,Float64}(0,0,0),itri,coord,pointlist;bary=false)
 
 # ╔═╡ 55ed5e5c-b51d-4d85-afbd-677576f27f1a
 begin

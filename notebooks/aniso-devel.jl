@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.18.0
+# v0.19.41
 
 using Markdown
 using InteractiveUtils
@@ -21,7 +21,7 @@ begin
 
     ENV["LC_NUMERIC"]="C"
 	using Revise
-	using AnisoFV
+	using AnisotropicFiniteVolumeProject
     using PlutoUI, PyPlot,SimplexGridFactory,ExtendableGrids,ExtendableSparse,GridVisualize,SparseArrays, Printf, HypertextLiteral,PlutoVista,Triangulate
 	using LinearAlgebra
 end;

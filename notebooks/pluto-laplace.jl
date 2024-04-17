@@ -1,18 +1,19 @@
 ### A Pluto.jl notebook ###
-# v0.19.3
+# v0.19.41
 
 using Markdown
 using InteractiveUtils
 
 # ╔═╡ 60941eaa-1aea-11eb-1277-97b991548781
 begin 
-	using Pkg
+	using Pkg 
+	
 	Pkg.activate(joinpath(@__DIR__,".."))
     using PlutoUI
-	using PlutoVista
+	using CairoMakie
 	using GridVisualize
     using VoronoiFVM
-	GridVisualize.default_plotter!(PlutoVista)
+	GridVisualize.default_plotter!(CairoMakie)
 end
 
 # ╔═╡ 3c9dece1-ef77-4599-a21a-9c7ca875621f

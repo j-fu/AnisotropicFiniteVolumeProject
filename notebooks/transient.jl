@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.18.1
+# v0.19.41
 
 using Markdown
 using InteractiveUtils
@@ -17,19 +17,18 @@ end
 # ╔═╡ 60941eaa-1aea-11eb-1277-97b991548781
 begin 
 	using Pkg
-        ENV["LC_NUMERIC"]="C"
 	Pkg.activate(joinpath(@__DIR__,".."))
 	using AnisotropicFiniteVolumeProject
     using Revise
     using PlutoUI
-	using PyPlot
+	import CairoMakie
     EL=PlutoUI.ExperimentalLayout
 	using GridVisualize
 	using ExtendableGrids
 	using DrWatson
 	using SimplexGridFactory,Triangulate
 	import PlutoVista
-	default_plotter!(PlutoVista)
+	default_plotter!(CairoMakie)
 	using LinearAlgebra
 	TableOfContents()
 end
@@ -76,7 +75,7 @@ end
 
 # ╔═╡ c825f9d6-e040-4a5e-87de-4de3282e7023
 function fourplots(grid,tsol; fname="test.png", times=plottimes)
-	vis=GridVisualizer(layout=(2,2),resolution=(700,600),Plotter=PyPlot)
+	vis=GridVisualizer(layout=(2,2),resolution=(700,600),Plotter=CairoMakie)
 	myplot(i,j,t)=
 	scalarplot!(vis[i,j],grid,tsol(t),colormap=:summer,levels=5, title="t=$t")	
 	myplot(1,1,times[1])

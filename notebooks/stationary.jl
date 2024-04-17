@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.18.1
+# v0.19.41
 
 using Markdown
 using InteractiveUtils
@@ -7,21 +7,21 @@ using InteractiveUtils
 # ╔═╡ 60941eaa-1aea-11eb-1277-97b991548781
 begin 
     using Pkg
-    ENV["LC_NUMERIC"]="C"
+	ENV["LC_NUMERIC"]="C"
+
     Pkg.activate(joinpath(@__DIR__,".."))
     using Revise
     using AnisotropicFiniteVolumeProject
     using Polynomials
-	
     using PlutoUI
     EL=PlutoUI.ExperimentalLayout
 	using GridVisualize
+	import CairoMakie
 	using PyPlot
 	using VoronoiFVM
 	using ExtendableGrids
 	using DrWatson
-	default_plotter!(PyPlot)
-	PyPlot.svg(true)
+	default_plotter!(CairoMakie)
 	using LinearAlgebra
 	TableOfContents()
 end
